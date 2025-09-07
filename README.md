@@ -51,29 +51,29 @@ The bot requires the following environment variables to be set in Modal for a ne
 
 Clone this repository:
 
-   ```bash
-   git clone <repository-url>
-   cd discord-bot
-   ```
+```bash
+git clone <repository-url>
+cd discord-bot
+```
 
 Setup your environment
 
-    ```bash
-    python3 -m venv venv
-    source venv/bin/activate
-    ```
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
 
 Install the requirements
 
-    ```bash
-    pip install -r requirements.txt
-    ```
+```bash
+pip install -r requirements.txt
+```
 
 Deploy the modal app
 
-    ```bash
-    modal deploy app.py
-    ```
+```bash
+modal deploy app.py
+```
 
 You'll get an URL here you'll need to set as the webhook in Discord. Test the url and after this you should be good to do.
 
