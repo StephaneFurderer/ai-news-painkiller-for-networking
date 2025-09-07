@@ -11,11 +11,11 @@ Everything is citated back to exact sources so the user can vet the information.
 **Note:** This is a first version, and a work in progress. 
 
 ## Tools used
-1. **Modal**: for hosting, set with min_container=1 to prevent timeouts.
-2. **Discord**: to run the bot through, setting up two commands (/setup and /news) user can run.
-3. **Safron**: for structured data on the tech scene, using the keywords and ai-facts endpoints to gather data.
-4. **MongoDB**: to store user profiles so it's easy for users to run /news without having to repeat themselves.
-5. **LLMs**: Gemini and GPT is used to transform natural language into json inputs along with GPT-5 at the end that find themes and summarizes.
+1. **[Modal](https://modal.com/)**: for hosting, set with min_container=1 to prevent timeouts.
+2. **[Discord](https://discord.com/)**: to run the bot through, setting up two commands (/setup and /news) user can run.
+3. **[Safron](https://docs.safron.io/)**: for structured data on the tech scene, using the keywords and ai-facts endpoints to gather data.
+4. **[MongoDB](https://www.mongodb.com/)**: to store user profiles so it's easy for users to run /news without having to repeat themselves.
+5. **LLMs**: [Gemini](https://ai.google.dev/) and [OpenAI GPT](https://platform.openai.com) is used to transform natural language into json inputs along with GPT-5 at the end that find themes and summarizes.
 
 # How to setup
 
