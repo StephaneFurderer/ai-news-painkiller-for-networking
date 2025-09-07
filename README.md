@@ -52,7 +52,7 @@ The bot requires the following environment variables to be set in Modal for a ne
 Clone this repository:
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/ilsilfverskiold/ai-personalized-tech-reports-discord.git
 cd discord-bot
 ```
 
@@ -98,7 +98,7 @@ discord-bot/
 │   │   ├── llm_*.py               # LLM integration
 │   │   └── *.py                   # Various utility functions
 │   └── config/
-│       └── llm_schemas.py         # Pydantic schemas for LLM responses
+│       └── llm_schemas.py         # Pydantic schemas for LLM responses + system templates
 ```
 
 ## Dependencies
