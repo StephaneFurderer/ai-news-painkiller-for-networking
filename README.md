@@ -4,9 +4,11 @@ An AI Discord bot built with Modal (serverless platform) and Safron API (docs.sa
 
 The bot processes thousands of posts and comments from tech websites (Reddit, HN, Github, tech blogs, X, ArXiv) by preprocessing and caching data then through various prompt-chaining strategies produces an extensive report that should be interesting to a user based on their profile. 
 
+![Discord Bot Example](images/example_discord.png)
+
 Everything is citated back to exact sources so the user can vet the information.
 
-![Discord Bot Example](example_discord.png)
+![Discord Bot Example Sources](images/sources_tech_bot_discord.png)
 
 **Note:** This is a first version, and a work in progress. 
 
@@ -45,7 +47,7 @@ The bot requires the following environment variables to be set in Modal for a ne
 - `GOOGLE_API_KEY`: Google Gemini API key
 - `OPENAI_API_KEY`: OpenAI API key
 
-![Secrets to set in Modal](secrets_modal.png)
+![Secrets to set in Modal](images/secrets_modal.png)
 
 ## Deployment
 
