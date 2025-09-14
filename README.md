@@ -1,8 +1,10 @@
 # Personalized Discord News Bot
 
-An AI Discord bot built with Modal (serverless platform) and Safron API (docs.safron.io) that provides personalized synthesized news reports for tech using social listening APIs and AI/LLM services.
+An AI Discord bot built with Modal (serverless platform) and [Safron API](https://docs.safron.io/) that provides personalized synthesized news reports for tech using social listening APIs and AI/LLM services.
 
 The bot processes thousands of posts and comments from tech websites (Reddit, HN, Github, tech blogs, X, ArXiv) by preprocessing and caching data then through various prompt-chaining strategies produces an extensive report that should be interesting to a user based on their profile. 
+
+If you want to try the bot without setting this up yourself, see the [Safron Discord server](https://discord.gg/v6BV49DCpp). 
 
 ![Discord Bot Example](images/example_discord.png)
 
