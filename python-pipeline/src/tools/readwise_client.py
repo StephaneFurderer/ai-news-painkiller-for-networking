@@ -1,11 +1,14 @@
 import os
 import requests
 from typing import Dict, List, Optional
-from dataclasses import dataclass
+from pydantic import BaseModel
+from dotenv import load_dotenv, find_dotenv
+
+# Ensure environment variables are loaded from the nearest .env if present
+load_dotenv(find_dotenv(usecwd=True), override=False)
 
 
-@dataclass
-class ReadwiseDocument:
+class ReadwiseDocument(BaseModel):
     id: str
     url: str
     title: str
@@ -22,10 +25,10 @@ class ReadwiseDocument:
     summary: str
     image_url: str
     content: str
-    html_content: str
+    html_content: str = ""
     reading_progress: float
-    first_opened_at: Optional[str]
-    last_opened_at: Optional[str]
+    first_opened_at: Optional[str] = None
+    last_opened_at: Optional[str] = None
     saved_at: str
     last_moved_at: str
 
@@ -37,7 +40,20 @@ class ReadwiseClient:
         if api_token:
             self.api_token = api_token
         else:
-            self.api_token = os.getenv("READWISE_TOKEN")
+            # Try common env var names
+            for key in (
+                "READWISE_TOKEN",
+                "READWISE_API_TOKEN",
+                "READWISE",
+                "READWISEKEY",
+                "readwise_token",
+            ):
+                value = os.getenv(key)
+                if value:
+                    self.api_token = value
+                    break
+            else:
+                self.api_token = None
 
         if not self.api_token:
             try:
@@ -46,7 +62,7 @@ class ReadwiseClient:
             except Exception:
                 pass
         if not self.api_token:
-            raise ValueError("READWISE_TOKEN environment variable is required")
+            raise ValueError("READWISE token not found. Set READWISE_TOKEN (or readwise_token) in .env")
 
         self.base_url = "https://readwise.io/api/v3"
         self.headers = {
@@ -92,6 +108,19 @@ class ReadwiseClient:
 
         doc_data = data["results"][0]
 
+        # Handle tags: convert dict to list or use empty list
+        tags_raw = doc_data.get("tags", [])
+        if isinstance(tags_raw, dict):
+            tags = list(tags_raw.keys()) if tags_raw else []
+        elif isinstance(tags_raw, list):
+            tags = tags_raw
+        else:
+            tags = []
+
+        # Handle content: ensure it's a string
+        content_raw = doc_data.get("content")
+        content = content_raw if content_raw is not None else ""
+
         return ReadwiseDocument(
             id=doc_data.get("id", ""),
             url=doc_data.get("url", ""),
@@ -100,7 +129,7 @@ class ReadwiseClient:
             source=doc_data.get("source", ""),
             category=doc_data.get("category", ""),
             location=doc_data.get("location", ""),
-            tags=doc_data.get("tags", []),
+            tags=tags,
             site_name=doc_data.get("site_name", ""),
             word_count=doc_data.get("word_count", 0),
             created_at=doc_data.get("created_at", ""),
@@ -108,7 +137,7 @@ class ReadwiseClient:
             notes=doc_data.get("notes", ""),
             summary=doc_data.get("summary", ""),
             image_url=doc_data.get("image_url", ""),
-            content=doc_data.get("content", ""),
+            content=content,
             html_content=doc_data.get("html_content", ""),
             reading_progress=doc_data.get("reading_progress", 0.0),
             first_opened_at=doc_data.get("first_opened_at"),
@@ -133,6 +162,19 @@ def get_readwise_content(document_id: Optional[str] = None, limit: int = 10, api
             documents = []
 
             for item in data.get("results", []):
+                # Handle tags: convert dict to list or use empty list
+                tags_raw = item.get("tags", [])
+                if isinstance(tags_raw, dict):
+                    tags = list(tags_raw.keys()) if tags_raw else []
+                elif isinstance(tags_raw, list):
+                    tags = tags_raw
+                else:
+                    tags = []
+
+                # Handle content: ensure it's a string
+                content_raw = item.get("content")
+                content = content_raw if content_raw is not None else ""
+
                 doc = ReadwiseDocument(
                     id=item.get("id", ""),
                     url=item.get("url", ""),
@@ -141,7 +183,7 @@ def get_readwise_content(document_id: Optional[str] = None, limit: int = 10, api
                     source=item.get("source", ""),
                     category=item.get("category", ""),
                     location=item.get("location", ""),
-                    tags=item.get("tags", []),
+                    tags=tags,
                     site_name=item.get("site_name", ""),
                     word_count=item.get("word_count", 0),
                     created_at=item.get("created_at", ""),
@@ -149,7 +191,7 @@ def get_readwise_content(document_id: Optional[str] = None, limit: int = 10, api
                     notes=item.get("notes", ""),
                     summary=item.get("summary", ""),
                     image_url=item.get("image_url", ""),
-                    content=item.get("content", ""),
+                    content=content,
                     reading_progress=item.get("reading_progress", 0.0),
                     first_opened_at=item.get("first_opened_at"),
                     last_opened_at=item.get("last_opened_at"),
