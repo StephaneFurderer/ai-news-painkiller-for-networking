@@ -1,0 +1,15 @@
+fastapi>=0.110.0
+modal
+requests
+pydantic
+python-dotenv
+PyNaCl
+aiohttp
+llama-index-core
+llama-index-llms-gemini
+google-generativeai
+google-genai
+llama-index-llms-openai
+openai
+pymongo[srv]>=4.6
+

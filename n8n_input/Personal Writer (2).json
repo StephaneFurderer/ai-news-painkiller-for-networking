@@ -1,0 +1,842 @@
+{
+  "name": "Personal Writer",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -160,
+        0
+      ],
+      "id": "72bf38d5-eefd-487d-9506-bc6c65f16793",
+      "name": "Telegram Trigger",
+      "webhookId": "49529612-25ac-4539-9165-19c8996dc6ae",
+      "credentials": {
+        "telegramApi": {
+          "id": "JMK6pMfmu9QEIddN",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.from.id }}",
+                    "rightValue": 8457266226,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    },
+                    "id": "d7f2632a-a303-4e38-811f-a516a23b9fac"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "trusted_channel"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "98f5b45f-4e61-4153-a6d5-1637ee1dce04",
+                    "leftValue": "={{ $json.message.from.id }}",
+                    "rightValue": 0,
+                    "operator": {
+                      "type": "number",
+                      "operation": "notEquals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "block_input"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -16,
+        0
+      ],
+      "id": "59a5251f-8f17-49f0-8d7f-2a9d6553dec7",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "errorMessage": "untrusted source"
+      },
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        128,
+        192
+      ],
+      "id": "5d6aff78-616a-4eb4-8246-61bcb2453c94",
+      "name": "Stop and Error"
+    },
+    {
+      "parameters": {
+        "chatId": "8457266226",
+        "text": "={{ $json.formatted_message }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2448,
+        -304
+      ],
+      "id": "98b6e51f-d7fa-458d-afc6-477be45af7cf",
+      "name": "Send a text message",
+      "webhookId": "e270fc37-9f06-4c2d-8eff-bf648f905ec4",
+      "credentials": {
+        "telegramApi": {
+          "id": "JMK6pMfmu9QEIddN",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const aiOutput = $json.output.Content || '';\nconst maxLength = 4000; // Leave some buffer for Telegram's 4096 limit\n\nlet finalMessage = aiOutput;\n\n// If message is too long, intelligently truncate\nif (finalMessage.length > maxLength) {\n  // Try to truncate at a sentence boundary\n  const truncated = finalMessage.substring(0, maxLength);\n  const lastSentence = truncated.lastIndexOf('.');\n  const lastNewline = truncated.lastIndexOf('\\n');\n  \n  // Find the best place to cut\n  const cutPoint = Math.max(lastSentence, lastNewline);\n  \n  if (cutPoint > maxLength * 0.8) {\n    // Good cut point found\n    finalMessage = finalMessage.substring(0, cutPoint + 1) + \"\\n\\n📝 [Full post truncated for Telegram]\";\n  } else {\n    // No good cut point, just truncate with ellipsis\n    finalMessage = finalMessage.substring(0, maxLength - 50) + \"...\\n\\n📝 [Message truncated due to length]\";\n  }\n}\n\nreturn { \n  formatted_message: finalMessage,\n  original_length: aiOutput.length,\n  was_truncated: aiOutput.length > maxLength\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2160,
+        -304
+      ],
+      "id": "18bfae00-059c-45a0-bfb4-894400dc5ab4",
+      "name": "Format for Telegram"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "databaseId": {
+          "__rl": true,
+          "value": "26b8ac37-b2c0-80b8-a7ef-cdfd775eee3f",
+          "mode": "list",
+          "cachedResultName": "LinkedIn Post Examples",
+          "cachedResultUrl": "https://www.notion.so/26b8ac37b2c080b8a7efcdfd775eee3f"
+        },
+        "title": "=[{{ $json.Category }}] {{ $json.Title }}",
+        "simple": false,
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Category|select",
+              "selectValue": "={{ $json.Category }}"
+            },
+            {
+              "key": "Content|rich_text",
+              "richText": true,
+              "text": {
+                "text": [
+                  {
+                    "text": "Google Doc",
+                    "isLink": true,
+                    "textLink": "={{ $json.documentId }}",
+                    "annotationUi": {}
+                  }
+                ]
+              }
+            },
+            {
+              "key": "Status|status",
+              "statusValue": "Draft"
+            },
+            {
+              "key": "Notes|rich_text",
+              "textContent": "={{ $json.notes.classification.REASONING }}"
+            },
+            {
+              "key": "source url|url",
+              "urlValue": "={{ $json.notes.souce_url }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        2096,
+        0
+      ],
+      "id": "4826495c-1683-4411-babd-f72ea5983dc4",
+      "name": "Create a database page",
+      "credentials": {
+        "notionApi": {
+          "id": "Qk4jl3bbygiL8ZSP",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n\t\"Content\": \"A long story about how to make a cake\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        656,
+        336
+      ],
+      "id": "cbcc65b3-ca99-44be-a0b1-a7dfd144821b",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6fb8ba9d-4cca-4128-b7b8-3ba9881c7cdf",
+              "name": "query",
+              "value": "={{ $json.message.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        176,
+        -16
+      ],
+      "id": "67b42ca9-0206-45a3-8c8a-0d1bd92c6044",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "RbC2Z7kvln1JagZk",
+          "mode": "list",
+          "cachedResultName": "Get Readwise Content"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "mode": "each",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        336,
+        -16
+      ],
+      "id": "c4447281-c1fe-4533-b15f-36d0c41e758a",
+      "name": "Get Readwise Info and Classification"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-5-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        432,
+        192
+      ],
+      "id": "bfc1f917-3423-491b-90fb-b3193d9f927d",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "eg4VFXYadt37fBOq",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "03c32ea0-25b7-474d-82f0-1b332ff389fe",
+              "name": "output.Content",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            },
+            {
+              "id": "fe3e411d-1395-4e21-b072-d380a607f4de",
+              "name": "Title",
+              "value": "={{ $('Get Readwise Info and Classification').item.json.Title }}",
+              "type": "string"
+            },
+            {
+              "id": "4ce144d3-7cf0-42f1-ae36-84d67ccab227",
+              "name": "Category",
+              "value": "={{ $('Get Readwise Info and Classification').item.json.Category }}",
+              "type": "string"
+            },
+            {
+              "id": "0be30685-ef00-447b-9981-87219c589c07",
+              "name": "notes.classification",
+              "value": "={{ $('Get Readwise Info and Classification').item.json.notes }}",
+              "type": "object"
+            },
+            {
+              "id": "a1b3187f-dad9-4430-8e9e-3360f4f2f042",
+              "name": "notes.author",
+              "value": "={{ $('Get Readwise Info and Classification').item.json.results[0].author }}",
+              "type": "string"
+            },
+            {
+              "id": "fdd851f3-3bbd-4c8b-aecb-8a3a9d360cd4",
+              "name": "notes.url",
+              "value": "={{ $('Get Readwise Info and Classification').item.json.results[0].url }}",
+              "type": "string"
+            },
+            {
+              "id": "4f1492a0-d897-42ba-b462-c79230112ccf",
+              "name": "summary",
+              "value": "={{ $('Get Readwise Info and Classification').item.json.results[0].summary }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1168,
+        -16
+      ],
+      "id": "9ff3ee1c-3aba-4468-af13-ebb039a64461",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-5-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        800,
+        192
+      ],
+      "id": "fece3377-dd18-47e1-9227-f275e5eedaaf",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "eg4VFXYadt37fBOq",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=# Content to create: \n\n## title: {{ $json.Title }}\n## summary: {{ $json.results[0].summary }}\n## html_content: {{ $json.results[0].html_content }}\n## category pre-selected: {{ $json.Category }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=# Role\nYou are a helpful assistant an expert in creating short social content, warm and engaging. \n\n# Instructions:\n## Platform: Linkedin\n## Content: Use the input you received to create one great long post\n## Length: The text should be below 2000 characters. \n## No marketing: don't include any marketing links from the source. Report only words and critical thinking.\n\n# Process:\n1. Generate a compelling LinkedIn post based on the 'category' and 'content'\n2. Be direct yet warm.\n\n# Output Format\nReturn a JSON object with exactly these fields:\n\n{\n  \"Content\": \"[YOUR GENERATED LINKEDIN POSTS CONTENT HERE]\", \n}\n\n# Final thoughts\n- NO HASTAGS\n"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        512,
+        -16
+      ],
+      "id": "8b009574-8d88-46e6-9cec-ade9f3561e03",
+      "name": "Draft"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.output.Content }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "# Role\nAct like a professional content writer and communication strategist. \n\n# Goal\nYour task is to write with a natural, human-like tone that avoids the usual pitfalls of AI-generated content.  \nThe goal is to produce clear, simple, and authentic writing that resonates with real people. \nYour responses should feel like they were written by a thoughtful and concise human writer.  \n\n\n# Instructions\nFollow these detailed step-by-step guidelines:  \n\n## Step 1: Use plain and simple language. \nAvoid long or complex sentences. \nOpt for short, clear statements.  \n- Example: Instead of \"We should leverage this opportunity,\" write \"Let's use this chance.\"  \n\n## Step 2: Avoid AI giveaway phrases and generic clichés such as \"let's dive in,\" \"game-changing,\" or \"unleash potential.\" \nReplace them with straightforward language.  \n- Example: Replace \"Let's dive into this amazing tool\" with \"Here’s how it works.\"  \n\n## Step 3: Be direct and concise. \nEliminate filler words and unnecessary phrases. \nFocus on getting to the point.  \n- Example: Say \"We should meet tomorrow,\" instead of \"I think it would be best if we could possibly try to meet.\"  \n\n## Step 4: Maintain a natural tone. Write like you speak. \nIt’s okay to start sentences with “and” or “but.” Make it feel conversational, not robotic.  \n- Example: “And that’s why it matters.”  \n\n## Step 5: Avoid marketing buzzwords, hype, and overpromises. \nUse neutral, honest descriptions.  \n- Avoid: \"This revolutionary app will change your life.\" - Use instead: \"This app can help you stay organized.\" \n\n## Step 6: Keep it real. \nBe honest. Don’t try to fake friendliness or exaggerate.  \n- Example: “I don’t think that’s the best idea.”  \n\n## Step 7: Simplify grammar. \nDon’t worry about perfect grammar if it disrupts natural flow. Casual expressions are okay.  \n\n- Example: “i guess we can try that.”  \n\n## Step 8: Remove fluff. \nAvoid using unnecessary adjectives or adverbs. \nStick to the facts or your core message.  \n- Example: Say “We finished the task,” not “We quickly and efficiently completed the important task.”  \n\n## Step 9: Focus on clarity. \nYour message should be easy to read and understand without ambiguity.  \n- Example: “Please send the file by Monday.”  Follow this structure rigorously. \nYour final writing should feel honest, grounded, and like it was written by a clear-thinking, real person.  \n\n# Final thoughts:\nTake a deep breath and work on this step-by-step.\nFocus on the hook (first line) the cliffhanger (subtitle) and bold yet authentic conclusion"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        800,
+        -16
+      ],
+      "id": "7da0c088-63a8-4b81-b150-7b0500a7d7cf",
+      "name": "Review For Humans"
+    },
+    {
+      "parameters": {
+        "folderId": "=1RBXeIkl1Df0dnaNtTeqRx7-ftH8CRRwW",
+        "title": "=[{{ $json.Category }}] {{ $json.Title }}"
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        176
+      ],
+      "id": "b402219e-d64a-440e-b59f-a462f54c2156",
+      "name": "Create a document",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "E6o8sDJSdsGvN6gW",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentURL": "={{ $json.id }}",
+        "actionsUi": {
+          "actionFields": [
+            {
+              "action": "insert",
+              "text": "=source url: \n{{ $('Edit Fields1').item.json.notes.url }}\n--\n{{ $('Edit Fields1').item.json.output.Content }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        1552,
+        176
+      ],
+      "id": "fb8cefcb-a97f-4035-986a-c7b6e07ab5cf",
+      "name": "Update a document",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "E6o8sDJSdsGvN6gW",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1744,
+        0
+      ],
+      "id": "06ea6cb3-fb14-4dec-8227-a28965a58738",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "dacf2676-6349-468a-8ee7-b2193a6775b2",
+              "name": "Title",
+              "value": "={{ $json.Title }}",
+              "type": "string"
+            },
+            {
+              "id": "67facdd4-ce73-463b-ba38-be48707828e5",
+              "name": "Category",
+              "value": "={{ $json.Category }}",
+              "type": "string"
+            },
+            {
+              "id": "1137941d-37a3-4337-a94c-71b78b04c70a",
+              "name": "notes.classification.REASONING",
+              "value": "={{ $json.notes.classification.REASONING }}",
+              "type": "string"
+            },
+            {
+              "id": "5f632574-db65-43f5-9dcd-1843ef790f61",
+              "name": "notes.souce_url",
+              "value": "={{ $json.notes.url }}",
+              "type": "string"
+            },
+            {
+              "id": "efaaa105-0f20-492c-aefb-650bfc329104",
+              "name": "documentId",
+              "value": "={{ 'https://docs.google.com/document/d/' + $json.documentId + '/edit' }}",
+              "type": "string"
+            },
+            {
+              "id": "226874d9-cddd-46bc-a05d-0e3ae7a01057",
+              "name": "",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1904,
+        0
+      ],
+      "id": "3183bdea-4cea-4d17-ae4c-7dcaaba37adb",
+      "name": "Edit Fields2"
+    }
+  ],
+  "pinData": {
+    "Telegram Trigger": [
+      {
+        "json": {
+          "update_id": 862387901,
+          "message": {
+            "message_id": 17,
+            "from": {
+              "id": 8457266226,
+              "is_bot": false,
+              "first_name": "Steph",
+              "language_code": "en"
+            },
+            "chat": {
+              "id": 8457266226,
+              "first_name": "Steph",
+              "type": "private"
+            },
+            "date": 1757625722,
+            "text": "https://read.readwise.io/filter/category%3Avideo/read/01k4gmjgnwfmg95t7smq2cyefe",
+            "entities": [
+              {
+                "offset": 0,
+                "length": 80,
+                "type": "url"
+              }
+            ],
+            "link_preview_options": {
+              "url": "https://read.readwise.io/filter/category%3Avideo/read/01k4gmjgnwfmg95t7smq2cyefe"
+            }
+          }
+        }
+      }
+    ],
+    "Edit Fields": [
+      {
+        "json": {
+          "query": "https://read.readwise.io/filter/category%3Avideo/read/01k4gmjgnwfmg95t7smq2cyefe"
+        }
+      }
+    ],
+    "Get Readwise Info and Classification": [
+      {
+        "json": {
+          "Title": "Your AI Agent Prompts Are Wrong - Here's The Fix",
+          "Category": "STORY",
+          "notes": {
+            "CONFIDENCE": 0.42,
+            "REASONING": "The algorithmic analysis scores the content highest for STORY, indicating it primarily reflects personal experiences or narrative insights. The confidence level is moderate, suggesting some overlap with other categories, but the primary intent appears to be sharing a story rather than instructing or reporting news."
+          },
+          "results": [
+            {
+              "title": "Your AI Agent Prompts Are Wrong - Here's The Fix",
+              "author": "Nate Herk | AI Automation",
+              "url": "https://read.readwise.io/read/01k4gmjgnwfmg95t7smq2cyefe",
+              "updated_at": "2025-09-06T23:07:58.866916+00:00",
+              "summary": "📌 Join my free Skool community for the document shown in this video! 👇\nhttps://www.skool.com/ai-automation-society/about\n\n🌟 Join my paid Skool community if you want to go deeper with n8n and AI Automations👇\nhttps://www.skool.com/ai-automation-society-plus/about\n\n🚧 Start Building with n8n! (I get kickback if you sign up here - thank you!)\nhttps://n8n.partnerlinks.io/22crlu8afq5r\n\n💻 Book A Call If You're Interested in Implementing AI Agents Into Your Business: \nhttps://truehorizon.ai/\n\nIf you've been struggling to get AI agents to think critically, follow instructions properly, or take real action, chances are you’re missing one key lesson about prompting. In this video, I break down the biggest lesson I’ve learned from working with AI agents—something that completely changed the way I approach prompting.\n\nBusiness Inquiries:\n📧 nate@truehorizon.ai\n\nWATCH NEXT:\nhttps://youtu.be/u2Tuu02r7QI\n\nTIMESTAMPS\n00:00 The Importance of Prompting\n01:10 What is Prompting?\n02:45 The Biggest Lesson I’ve Learned\n05:45 Guide to Reactive Prompting\n10:02 Components of an Effective Prompt\n17:36 Live Prompting/Testing an Agent\n\n\nGear I Used:\nCamera: Razer Kiyo Pro\nMicrophone: HyperX SoloCast",
+              "html_content": "<p><span data-rw-transcript-version=\"2\" data-rw-start=\"0\">building AI agents and hooking up </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1.199\">different tools is fun and all but the </span><span data-rw-transcript-version=\"2\" data-rw-start=\"2.72\">quality and consistency of the </span><span data-rw-transcript-version=\"2\" data-rw-start=\"4.04\">performance of your agents directly ties </span><span data-rw-transcript-version=\"2\" data-rw-start=\"5.92\">back to the quality of the system prompt </span><span data-rw-transcript-version=\"2\" data-rw-start=\"7.68\">that you put in there if you guys don&#39;t </span><span data-rw-transcript-version=\"2\" data-rw-start=\"9.32\">know me my name is Nate I&#39;ve been </span><span data-rw-transcript-version=\"2\" data-rw-start=\"10.44\">building agents for a while now and I </span><span data-rw-transcript-version=\"2\" data-rw-start=\"11.719\">also run a school Community that&#39;s all </span><span data-rw-transcript-version=\"2\" data-rw-start=\"13.24\">about building AI agents with NN we&#39;ve </span><span data-rw-transcript-version=\"2\" data-rw-start=\"15.599\">got different Deep dive Topics in there </span><span data-rw-transcript-version=\"2\" data-rw-start=\"16.88\">like building AI agents Vector databases </span><span data-rw-transcript-version=\"2\" data-rw-start=\"19.279\">apis and HTTP requests and also doing </span><span data-rw-transcript-version=\"2\" data-rw-start=\"21.32\">step-by-step builds of all the videos </span><span data-rw-transcript-version=\"2\" data-rw-start=\"23.119\">shown on my channel and if it&#39;s </span><span data-rw-transcript-version=\"2\" data-rw-start=\"24.64\">something you&#39;re interested in check out </span><span data-rw-transcript-version=\"2\" data-rw-start=\"25.84\">the link in the description anyways </span><span data-rw-transcript-version=\"2\" data-rw-start=\"27.32\">today what we&#39;re going to be talking </span><span data-rw-transcript-version=\"2\" data-rw-start=\"28.16\">about is what actually goes into </span><span data-rw-transcript-version=\"2\" data-rw-start=\"29.48\">creating an effective prompt so that </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"31.039\">your agents perform as you want them to </span><span data-rw-transcript-version=\"2\" data-rw-start=\"33.36\">I&#39;m going to be going over the most </span><span data-rw-transcript-version=\"2\" data-rw-start=\"34.44\">important thing that I&#39;ve learned while </span><span data-rw-transcript-version=\"2\" data-rw-start=\"35.64\">building out agents and prompting them </span><span data-rw-transcript-version=\"2\" data-rw-start=\"37.32\">that I don&#39;t think a lot of people are </span><span data-rw-transcript-version=\"2\" data-rw-start=\"38.32\">doing so let&#39;s not waste any time and </span><span data-rw-transcript-version=\"2\" data-rw-start=\"39.92\">get straight into this one all right so </span><span data-rw-transcript-version=\"2\" data-rw-start=\"41.719\">I&#39;ve got a document here if you want to </span><span data-rw-transcript-version=\"2\" data-rw-start=\"43\">download this one to follow along or </span><span data-rw-transcript-version=\"2\" data-rw-start=\"44.399\">just have it for later you can do so by </span><span data-rw-transcript-version=\"2\" data-rw-start=\"45.96\">joining my fre School Community the link </span><span data-rw-transcript-version=\"2\" data-rw-start=\"47.399\">for that&#39;s down in the description </span><span data-rw-transcript-version=\"2\" data-rw-start=\"48.719\">you&#39;ll just click on YouTube resources </span><span data-rw-transcript-version=\"2\" data-rw-start=\"50.079\">and find the post associated with this </span><span data-rw-transcript-version=\"2\" data-rw-start=\"51.559\">video and you&#39;ll be able to download the </span><span data-rw-transcript-version=\"2\" data-rw-start=\"52.84\">PDF right there anyways what we&#39;re </span><span data-rw-transcript-version=\"2\" data-rw-start=\"55.039\">looking at today is how we can Master </span><span data-rw-transcript-version=\"2\" data-rw-start=\"56.68\">reactive prompting for AI agents in </span><span data-rw-transcript-version=\"2\" data-rw-start=\"58.84\">naden and the objective of this document </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"60.879\">here is to understand what prompting is </span><span data-rw-transcript-version=\"2\" data-rw-start=\"62.519\">why it matters develop a structured </span><span data-rw-transcript-version=\"2\" data-rw-start=\"64.4\">approach to reactive prompting when </span><span data-rw-transcript-version=\"2\" data-rw-start=\"65.96\">building out AI agents and then learn </span><span data-rw-transcript-version=\"2\" data-rw-start=\"67.84\">about the essential prompt components so </span><span data-rw-transcript-version=\"2\" data-rw-start=\"69.96\">let&#39;s get straight into it and start off </span><span data-rw-transcript-version=\"2\" data-rw-start=\"71.52\">with just a brief introduction What is </span><span data-rw-transcript-version=\"2\" data-rw-start=\"73.4\">prompting make sure you stick around for </span><span data-rw-transcript-version=\"2\" data-rw-start=\"75.24\">this one because once we get through </span><span data-rw-transcript-version=\"2\" data-rw-start=\"76.32\">this doc we&#39;re going to hop into NN and </span><span data-rw-transcript-version=\"2\" data-rw-start=\"77.799\">do some live prompting examples So </span><span data-rw-transcript-version=\"2\" data-rw-start=\"79.799\">within our agents we&#39;re giving them a </span><span data-rw-transcript-version=\"2\" data-rw-start=\"81.04\">system prompt and this is basically just </span><span data-rw-transcript-version=\"2\" data-rw-start=\"82.96\">coding them on how to act but don&#39;t be </span><span data-rw-transcript-version=\"2\" data-rw-start=\"85.04\">scared of the word code because we&#39;re </span><span data-rw-transcript-version=\"2\" data-rw-start=\"86.28\">just using natural language instead of </span><span data-rw-transcript-version=\"2\" data-rw-start=\"87.84\">something like python or JavaScript a </span><span data-rw-transcript-version=\"2\" data-rw-start=\"90\">good system prompt is going to ensure </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"91.439\">that your agent is behaving in a very </span><span data-rw-transcript-version=\"2\" data-rw-start=\"93.119\">clear very specific and a very </span><span data-rw-transcript-version=\"2\" data-rw-start=\"94.92\">repeatable way so instead of us </span><span data-rw-transcript-version=\"2\" data-rw-start=\"96.92\">programming some sort of python agent </span><span data-rw-transcript-version=\"2\" data-rw-start=\"98.96\">what we&#39;re doing is we&#39;re just typing in </span><span data-rw-transcript-version=\"2\" data-rw-start=\"100.439\">you&#39;re an email agent your job is to </span><span data-rw-transcript-version=\"2\" data-rw-start=\"102.079\">assist the user by using your tools to </span><span data-rw-transcript-version=\"2\" data-rw-start=\"103.64\">take the correct action exactly as if we </span><span data-rw-transcript-version=\"2\" data-rw-start=\"105.64\">were instructing an intern and why does </span><span data-rw-transcript-version=\"2\" data-rw-start=\"108.079\">prompting matter I&#39;m sure by now you </span><span data-rw-transcript-version=\"2\" data-rw-start=\"109.6\">guys already have a good reason in your </span><span data-rw-transcript-version=\"2\" data-rw-start=\"111\">head of why prompting matters and it&#39;s </span><span data-rw-transcript-version=\"2\" data-rw-start=\"112.88\">pretty intuitive but let&#39;s think about </span><span data-rw-transcript-version=\"2\" data-rw-start=\"114.68\">it like this as well agents are meant to </span><span data-rw-transcript-version=\"2\" data-rw-start=\"116.799\">be running autonomously and they don&#39;t </span><span data-rw-transcript-version=\"2\" data-rw-start=\"118.799\">allow that back and forth interaction </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"120.52\">like Chachi BT now yes there can be some </span><span data-rw-transcript-version=\"2\" data-rw-start=\"122.64\">human in the loop within your sort of </span><span data-rw-transcript-version=\"2\" data-rw-start=\"124.399\">agentic workflows but ideally you put in </span><span data-rw-transcript-version=\"2\" data-rw-start=\"126.88\">an input it triggers the automation </span><span data-rw-transcript-version=\"2\" data-rw-start=\"129.119\">triggers the agent to do something and </span><span data-rw-transcript-version=\"2\" data-rw-start=\"130.399\">then we&#39;re getting an output unlike chat </span><span data-rw-transcript-version=\"2\" data-rw-start=\"132.12\">gbt where you ask it to help you write </span><span data-rw-transcript-version=\"2\" data-rw-start=\"133.44\">an email and you can say hey make that </span><span data-rw-transcript-version=\"2\" data-rw-start=\"134.76\">shorter or you can say make it more </span><span data-rw-transcript-version=\"2\" data-rw-start=\"136.68\">professional we don&#39;t have that um </span><span data-rw-transcript-version=\"2\" data-rw-start=\"138.519\">luxury here we just need to trust that </span><span data-rw-transcript-version=\"2\" data-rw-start=\"140.16\">it&#39;s going to work consistently and high </span><span data-rw-transcript-version=\"2\" data-rw-start=\"142.08\">quality so our goal as prompters is to </span><span data-rw-transcript-version=\"2\" data-rw-start=\"145.16\">get the prompt right the first time so </span><span data-rw-transcript-version=\"2\" data-rw-start=\"146.64\">that the agent functions correctly every </span><span data-rw-transcript-version=\"2\" data-rw-start=\"148.64\">single time it&#39;s triggered so the key </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"150.319\">role here is to keep the prompts clear </span><span data-rw-transcript-version=\"2\" data-rw-start=\"151.8\">simple and actionable you don&#39;t want to </span><span data-rw-transcript-version=\"2\" data-rw-start=\"153.239\">leave any room for </span><span data-rw-transcript-version=\"2\" data-rw-start=\"154.76\">misinterpretation um and also less is </span><span data-rw-transcript-version=\"2\" data-rw-start=\"156.76\">more sometimes I&#39;ll see people just </span><span data-rw-transcript-version=\"2\" data-rw-start=\"158.239\">throw in a novel and that&#39;s just </span><span data-rw-transcript-version=\"2\" data-rw-start=\"159.76\">obviously going to be more expensive for </span><span data-rw-transcript-version=\"2\" data-rw-start=\"161.36\">you and also just more room to confuse </span><span data-rw-transcript-version=\"2\" data-rw-start=\"163.28\">the agent so less is more so now let&#39;s </span><span data-rw-transcript-version=\"2\" data-rw-start=\"165.72\">get into the biggest lesson that I&#39;ve </span><span data-rw-transcript-version=\"2\" data-rw-start=\"166.92\">learned while prompting AI agents which </span><span data-rw-transcript-version=\"2\" data-rw-start=\"169.159\">is prompting needs to be done reactively </span><span data-rw-transcript-version=\"2\" data-rw-start=\"172.44\">I see way too many people doing this </span><span data-rw-transcript-version=\"2\" data-rw-start=\"173.879\">proactively throwing in a huge system </span><span data-rw-transcript-version=\"2\" data-rw-start=\"175.72\">message and then just testing things out </span><span data-rw-transcript-version=\"2\" data-rw-start=\"177.68\">this is just not the way to go so let&#39;s </span><span data-rw-transcript-version=\"2\" data-rw-start=\"179.519\">dive into into what that actually means </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"180.959\">to be prompting reactively first of all </span><span data-rw-transcript-version=\"2\" data-rw-start=\"183.36\">what is proactive prompting this is just </span><span data-rw-transcript-version=\"2\" data-rw-start=\"185.12\">writing a long detailed prompt up front </span><span data-rw-transcript-version=\"2\" data-rw-start=\"187.36\">after you have all your tools configured </span><span data-rw-transcript-version=\"2\" data-rw-start=\"188.76\">and all of the sort of you know standard </span><span data-rw-transcript-version=\"2\" data-rw-start=\"190.799\">operating procedures configured and then </span><span data-rw-transcript-version=\"2\" data-rw-start=\"192.72\">you start testing it out the problem </span><span data-rw-transcript-version=\"2\" data-rw-start=\"194.56\">here is that you don&#39;t know all the </span><span data-rw-transcript-version=\"2\" data-rw-start=\"196.68\">possible edge cases and errors in </span><span data-rw-transcript-version=\"2\" data-rw-start=\"198.4\">advance and debugging is going to be a </span><span data-rw-transcript-version=\"2\" data-rw-start=\"200.12\">lot more difficult because if something </span><span data-rw-transcript-version=\"2\" data-rw-start=\"201.4\">breaks you don&#39;t know which part of the </span><span data-rw-transcript-version=\"2\" data-rw-start=\"203.08\">prompt is causing the issue you may try </span><span data-rw-transcript-version=\"2\" data-rw-start=\"205\">to fix something in there and then the </span><span data-rw-transcript-version=\"2\" data-rw-start=\"206.56\">issue originally you were having is </span><span data-rw-transcript-version=\"2\" data-rw-start=\"207.879\">fixed but now you cause a new issue and </span><span data-rw-transcript-version=\"2\" data-rw-start=\"209.879\">it&#39;s just going to be really messy as </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"211.04\">you continue to add more and more and </span><span data-rw-transcript-version=\"2\" data-rw-start=\"212.519\">you end up just confusing both yourself </span><span data-rw-transcript-version=\"2\" data-rw-start=\"214.2\">and the agent now reactive prompting on </span><span data-rw-transcript-version=\"2\" data-rw-start=\"216.4\">the other hand is just starting with </span><span data-rw-transcript-version=\"2\" data-rw-start=\"217.799\">absolutely nothing and adding a tool </span><span data-rw-transcript-version=\"2\" data-rw-start=\"219.68\">testing it out and then slowly adding </span><span data-rw-transcript-version=\"2\" data-rw-start=\"221.56\">sentence by sentence and as you&#39;ve seen </span><span data-rw-transcript-version=\"2\" data-rw-start=\"223.439\">in some of my demos we&#39;re able to get </span><span data-rw-transcript-version=\"2\" data-rw-start=\"224.92\">like six tools hooked up have no prompt </span><span data-rw-transcript-version=\"2\" data-rw-start=\"227\">in there and the agent&#39;s still working </span><span data-rw-transcript-version=\"2\" data-rw-start=\"228.439\">pretty well at that point we&#39;re able to </span><span data-rw-transcript-version=\"2\" data-rw-start=\"229.959\">start adding more lines to make the </span><span data-rw-transcript-version=\"2\" data-rw-start=\"231.36\">system more </span><span data-rw-transcript-version=\"2\" data-rw-start=\"232.4\">robust but the benefits here of reactive </span><span data-rw-transcript-version=\"2\" data-rw-start=\"234.68\">prompting are pretty clear the first one </span><span data-rw-transcript-version=\"2\" data-rw-start=\"237.04\">is easier debugging you know exactly </span><span data-rw-transcript-version=\"2\" data-rw-start=\"239.28\">what bro the agent whether that&#39;s I </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"241.239\">added this sentence and then the </span><span data-rw-transcript-version=\"2\" data-rw-start=\"242.36\">automation broke all I have to do is </span><span data-rw-transcript-version=\"2\" data-rw-start=\"243.68\">take out that sentence or I added this </span><span data-rw-transcript-version=\"2\" data-rw-start=\"245.36\">tool and I didn&#39;t prompt the tool yet so </span><span data-rw-transcript-version=\"2\" data-rw-start=\"247.439\">that&#39;s what cause the automation to </span><span data-rw-transcript-version=\"2\" data-rw-start=\"248.48\">break so I&#39;m just going to add a </span><span data-rw-transcript-version=\"2\" data-rw-start=\"249.439\">sentence in right here about the tool </span><span data-rw-transcript-version=\"2\" data-rw-start=\"251.439\">this is also going to lead to more </span><span data-rw-transcript-version=\"2\" data-rw-start=\"252.519\">efficient testing because you can see </span><span data-rw-transcript-version=\"2\" data-rw-start=\"254.079\">exactly what happens before you hard </span><span data-rw-transcript-version=\"2\" data-rw-start=\"256.199\">prompt in fixes and essentially you know </span><span data-rw-transcript-version=\"2\" data-rw-start=\"258.199\">I&#39;ll talk about hard prompting more </span><span data-rw-transcript-version=\"2\" data-rw-start=\"259.88\">later but essentially what it is is um </span><span data-rw-transcript-version=\"2\" data-rw-start=\"262.759\">you&#39;re basically seeing an error and </span><span data-rw-transcript-version=\"2\" data-rw-start=\"264.6\">then you&#39;re hard prompting in the error </span><span data-rw-transcript-version=\"2\" data-rw-start=\"266.16\">within the system prompt and saying hey </span><span data-rw-transcript-version=\"2\" data-rw-start=\"268.08\">like you just did this that was wrong </span><span data-rw-transcript-version=\"2\" data-rw-start=\"270\">don&#39;t do that again and we can only do </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"271.56\">that reactively because we don&#39;t know </span><span data-rw-transcript-version=\"2\" data-rw-start=\"273.039\">how the agent&#39;s going to react before we </span><span data-rw-transcript-version=\"2\" data-rw-start=\"274.56\">test it out finally we have the benefit </span><span data-rw-transcript-version=\"2\" data-rw-start=\"276.919\">that it prevents over complicated </span><span data-rw-transcript-version=\"2\" data-rw-start=\"278.199\">prompts that are hard to modify later if </span><span data-rw-transcript-version=\"2\" data-rw-start=\"280.56\">you have a whole novel in there and </span><span data-rw-transcript-version=\"2\" data-rw-start=\"282.4\">you&#39;re getting errors you&#39;re not going </span><span data-rw-transcript-version=\"2\" data-rw-start=\"283.44\">to know where to start you&#39;re going to </span><span data-rw-transcript-version=\"2\" data-rw-start=\"284.56\">be overwhelmed so taking it step by step </span><span data-rw-transcript-version=\"2\" data-rw-start=\"286.919\">starting with nothing and adding on </span><span data-rw-transcript-version=\"2\" data-rw-start=\"288.44\">things slowly is the way to go and so if </span><span data-rw-transcript-version=\"2\" data-rw-start=\"290.96\">it still isn&#39;t clicking yet let&#39;s look </span><span data-rw-transcript-version=\"2\" data-rw-start=\"292.199\">at a real world example let&#39;s say you&#39;re </span><span data-rw-transcript-version=\"2\" data-rw-start=\"293.759\">teaching a kid to ride a bike if you </span><span data-rw-transcript-version=\"2\" data-rw-start=\"295.36\">took a proactive approach you&#39;d be </span><span data-rw-transcript-version=\"2\" data-rw-start=\"297.16\">trying to correct the child&#39;s behavior </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"300.039\">before you know what he or she is going </span><span data-rw-transcript-version=\"2\" data-rw-start=\"301.479\">to do so if you&#39;re telling the kid to </span><span data-rw-transcript-version=\"2\" data-rw-start=\"304.039\">keep your back straight lean forward you </span><span data-rw-transcript-version=\"2\" data-rw-start=\"305.84\">know don&#39;t tilt a certain way that&#39;s </span><span data-rw-transcript-version=\"2\" data-rw-start=\"307.68\">going to be confusing because now the </span><span data-rw-transcript-version=\"2\" data-rw-start=\"309\">kid is trying to adjust to all these </span><span data-rw-transcript-version=\"2\" data-rw-start=\"310.56\">things you&#39;ve said and it doesn&#39;t even </span><span data-rw-transcript-version=\"2\" data-rw-start=\"312.16\">know what it was going to do what he or </span><span data-rw-transcript-version=\"2\" data-rw-start=\"314.12\">she was going to do in the in the </span><span data-rw-transcript-version=\"2\" data-rw-start=\"315.4\">beginning but if you&#39;re taking a </span><span data-rw-transcript-version=\"2\" data-rw-start=\"317.039\">reactive approach and obviously maybe </span><span data-rw-transcript-version=\"2\" data-rw-start=\"319.24\">this wasn&#39;t the best example CU you </span><span data-rw-transcript-version=\"2\" data-rw-start=\"320.36\">don&#39;t want your kid to fall but you let </span><span data-rw-transcript-version=\"2\" data-rw-start=\"322.72\">them ride you see what they&#39;re doing you </span><span data-rw-transcript-version=\"2\" data-rw-start=\"324.72\">know if they&#39;re leaning too much to the </span><span data-rw-transcript-version=\"2\" data-rw-start=\"326.36\">left you&#39;re going to say okay well maybe </span><span data-rw-transcript-version=\"2\" data-rw-start=\"327.84\">you need to lean a little more to the </span><span data-rw-transcript-version=\"2\" data-rw-start=\"329\">right to center yourself up um and only </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"331.56\">correct what they actually need to have </span><span data-rw-transcript-version=\"2\" data-rw-start=\"333.08\">corrected this is going to be more </span><span data-rw-transcript-version=\"2\" data-rw-start=\"334.639\">effective fewer unnecessary instructions </span><span data-rw-transcript-version=\"2\" data-rw-start=\"337.16\">and just more simple and less </span><span data-rw-transcript-version=\"2\" data-rw-start=\"338.4\">overwhelming so the moral of story here </span><span data-rw-transcript-version=\"2\" data-rw-start=\"340.44\">is to start small observe errors and fix </span><span data-rw-transcript-version=\"2\" data-rw-start=\"342.6\">one problem at a time so let&#39;s take a </span><span data-rw-transcript-version=\"2\" data-rw-start=\"344.72\">look at some examples of reactive </span><span data-rw-transcript-version=\"2\" data-rw-start=\"346.16\">prompting that I&#39;ve done in my ultimate </span><span data-rw-transcript-version=\"2\" data-rw-start=\"347.88\">assistant workflow as you can see right </span><span data-rw-transcript-version=\"2\" data-rw-start=\"349.199\">here I&#39;m sure you guys have seen that </span><span data-rw-transcript-version=\"2\" data-rw-start=\"350.28\">video by now if you haven&#39;t I&#39;ll link it </span><span data-rw-transcript-version=\"2\" data-rw-start=\"352.08\">right up here but I did a ton of </span><span data-rw-transcript-version=\"2\" data-rw-start=\"353.759\">reactive prompting in here because I </span><span data-rw-transcript-version=\"2\" data-rw-start=\"355.12\">have one main agent calling four </span><span data-rw-transcript-version=\"2\" data-rw-start=\"356.8\">different agents and then within those </span><span data-rw-transcript-version=\"2\" data-rw-start=\"358.72\">sub agents they all have different tools </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"360.199\">that they need to call so this was very </span><span data-rw-transcript-version=\"2\" data-rw-start=\"361.88\">very reactive when I was prompting this </span><span data-rw-transcript-version=\"2\" data-rw-start=\"364.16\">workflow or this system of Agents I </span><span data-rw-transcript-version=\"2\" data-rw-start=\"366.919\">started with no persistent prompt at all </span><span data-rw-transcript-version=\"2\" data-rw-start=\"368.479\">I just connected a tool and I tested it </span><span data-rw-transcript-version=\"2\" data-rw-start=\"370.24\">out to see what would happened so an </span><span data-rw-transcript-version=\"2\" data-rw-start=\"372.08\">example would be I hooked up an email </span><span data-rw-transcript-version=\"2\" data-rw-start=\"373.319\">agent but I didn&#39;t give it in any </span><span data-rw-transcript-version=\"2\" data-rw-start=\"374.479\">instructions and I running the AI to see </span><span data-rw-transcript-version=\"2\" data-rw-start=\"376.36\">if it will call the tool automatically a </span><span data-rw-transcript-version=\"2\" data-rw-start=\"378.039\">lot of times it will and then it only </span><span data-rw-transcript-version=\"2\" data-rw-start=\"379.88\">comes to when you add another different </span><span data-rw-transcript-version=\"2\" data-rw-start=\"381.4\">agent that you need to prompt in hey </span><span data-rw-transcript-version=\"2\" data-rw-start=\"383.16\">these are the two agents you have here&#39;s </span><span data-rw-transcript-version=\"2\" data-rw-start=\"384.56\">when to use each one so anyways adding </span><span data-rw-transcript-version=\"2\" data-rw-start=\"386.919\">prompts based on errors here I have my </span><span data-rw-transcript-version=\"2\" data-rw-start=\"388.88\">system prompts you you guys want to </span><span data-rw-transcript-version=\"2\" data-rw-start=\"389.96\">pause it and read through you can take a </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"391.36\">look but you can see it&#39;s very very </span><span data-rw-transcript-version=\"2\" data-rw-start=\"393.08\">simple I&#39;ve got one example I&#39;ve got </span><span data-rw-transcript-version=\"2\" data-rw-start=\"394.919\">basically one brief Rule and then I just </span><span data-rw-transcript-version=\"2\" data-rw-start=\"396.639\">have all the tools that has and when to </span><span data-rw-transcript-version=\"2\" data-rw-start=\"398.28\">use them and it&#39;s very very concise and </span><span data-rw-transcript-version=\"2\" data-rw-start=\"401\">not overwhelming and so what I want you </span><span data-rw-transcript-version=\"2\" data-rw-start=\"403\">guys to pay attention to real quick is </span><span data-rw-transcript-version=\"2\" data-rw-start=\"404.28\">in the overview right here I said you </span><span data-rw-transcript-version=\"2\" data-rw-start=\"406.84\">know you&#39;re the ultimate personal </span><span data-rw-transcript-version=\"2\" data-rw-start=\"407.8\">assistant your job is to send the user&#39;s </span><span data-rw-transcript-version=\"2\" data-rw-start=\"409.199\">query to the correct tool that&#39;s all I </span><span data-rw-transcript-version=\"2\" data-rw-start=\"410.8\">had at first and then I was getting this </span><span data-rw-transcript-version=\"2\" data-rw-start=\"412.56\">error where I was saying hey write an </span><span data-rw-transcript-version=\"2\" data-rw-start=\"414.44\">email to Bob and what was happening is </span><span data-rw-transcript-version=\"2\" data-rw-start=\"417.56\">it wasn&#39;t sending that query to the </span><span data-rw-transcript-version=\"2\" data-rw-start=\"419.639\">email tool which is supposed to do it </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"421.68\">itself was trying to write an email even </span><span data-rw-transcript-version=\"2\" data-rw-start=\"423.12\">though it has no tool to write an email </span><span data-rw-transcript-version=\"2\" data-rw-start=\"424.96\">so then I reactively came in here and </span><span data-rw-transcript-version=\"2\" data-rw-start=\"426.72\">said you should never be writing emails </span><span data-rw-transcript-version=\"2\" data-rw-start=\"428.68\">or creating event summaries you just </span><span data-rw-transcript-version=\"2\" data-rw-start=\"430.319\">need to call the correct tool and that&#39;s </span><span data-rw-transcript-version=\"2\" data-rw-start=\"432.36\">not something I could have proactively </span><span data-rw-transcript-version=\"2\" data-rw-start=\"433.479\">put in there because I didn&#39;t really </span><span data-rw-transcript-version=\"2\" data-rw-start=\"434.759\">expect the agent to be doing that so I </span><span data-rw-transcript-version=\"2\" data-rw-start=\"436.479\">saw the error and then I basically </span><span data-rw-transcript-version=\"2\" data-rw-start=\"437.84\">hardcoded in what it should not be doing </span><span data-rw-transcript-version=\"2\" data-rw-start=\"439.919\">and what it should be doing so another </span><span data-rw-transcript-version=\"2\" data-rw-start=\"441.96\">cool example of hardcoding stuff in is </span><span data-rw-transcript-version=\"2\" data-rw-start=\"443.599\">using examples you know we all </span><span data-rw-transcript-version=\"2\" data-rw-start=\"445.479\">understand that examples are going to </span><span data-rw-transcript-version=\"2\" data-rw-start=\"446.44\">help the agent understand what it needs </span><span data-rw-transcript-version=\"2\" data-rw-start=\"448.08\">to do based on certain inputs and how to </span><span data-rw-transcript-version=\"2\" data-rw-start=\"449.919\">use different tools and so right here </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"451.599\">you can see I added this example but </span><span data-rw-transcript-version=\"2\" data-rw-start=\"453.12\">we&#39;ll also look at it down here because </span><span data-rw-transcript-version=\"2\" data-rw-start=\"454.28\">I basically copied it in what happened </span><span data-rw-transcript-version=\"2\" data-rw-start=\"456.479\">was the AI failed in a very specific </span><span data-rw-transcript-version=\"2\" data-rw-start=\"458.12\">scenario so I added a concrete example </span><span data-rw-transcript-version=\"2\" data-rw-start=\"460.319\">where I gave it an input I showed the </span><span data-rw-transcript-version=\"2\" data-rw-start=\"462.12\">actions it should take and then I gave </span><span data-rw-transcript-version=\"2\" data-rw-start=\"463.759\">it the output so in this case what </span><span data-rw-transcript-version=\"2\" data-rw-start=\"465.479\">happened was I asked it to write an </span><span data-rw-transcript-version=\"2\" data-rw-start=\"467\">email to Bob and it tried to send an </span><span data-rw-transcript-version=\"2\" data-rw-start=\"468.72\">email or Tred it tried to hit the send </span><span data-rw-transcript-version=\"2\" data-rw-start=\"470.639\">email agent but it didn&#39;t actually have </span><span data-rw-transcript-version=\"2\" data-rw-start=\"472.08\">Bob&#39;s email address so the email didn&#39;t </span><span data-rw-transcript-version=\"2\" data-rw-start=\"473.4\">get sent so what I did here was I put in </span><span data-rw-transcript-version=\"2\" data-rw-start=\"475.319\">the input which was send an email to Bob </span><span data-rw-transcript-version=\"2\" data-rw-start=\"477.68\">asking him what time he wants to leave I </span><span data-rw-transcript-version=\"2\" data-rw-start=\"479.599\">then showed the two actions it needs to </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"480.96\">take the first one was use the contact </span><span data-rw-transcript-version=\"2\" data-rw-start=\"482.68\">agent to get Bob&#39;s email send this email </span><span data-rw-transcript-version=\"2\" data-rw-start=\"484.759\">address to the email agent tool and then </span><span data-rw-transcript-version=\"2\" data-rw-start=\"486.639\">the second action is use the email agent </span><span data-rw-transcript-version=\"2\" data-rw-start=\"488.24\">to send the email and then finally the </span><span data-rw-transcript-version=\"2\" data-rw-start=\"490.12\">output that we want the personal </span><span data-rw-transcript-version=\"2\" data-rw-start=\"491.28\">assistant to say back to the human is </span><span data-rw-transcript-version=\"2\" data-rw-start=\"493.24\">the email has been sent to Bob anything </span><span data-rw-transcript-version=\"2\" data-rw-start=\"494.84\">else I can help you with the idea here </span><span data-rw-transcript-version=\"2\" data-rw-start=\"496.639\">is you don&#39;t need to put examples in </span><span data-rw-transcript-version=\"2\" data-rw-start=\"497.879\">there that are pretty intuitive and that </span><span data-rw-transcript-version=\"2\" data-rw-start=\"499.12\">the agent&#39;s going to get right already </span><span data-rw-transcript-version=\"2\" data-rw-start=\"500.96\">you only want to put in examples where </span><span data-rw-transcript-version=\"2\" data-rw-start=\"502.8\">you&#39;re noticing common themes of the </span><span data-rw-transcript-version=\"2\" data-rw-start=\"504.4\">agents failing to do this every time I </span><span data-rw-transcript-version=\"2\" data-rw-start=\"506.24\">may as well hardcode in this example </span><span data-rw-transcript-version=\"2\" data-rw-start=\"508.159\">input and output and Tool calls so step </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"511.44\">four is to debug one error at a time </span><span data-rw-transcript-version=\"2\" data-rw-start=\"513.68\">always change one thing and one thing </span><span data-rw-transcript-version=\"2\" data-rw-start=\"515.12\">only at a time so you know exactly what </span><span data-rw-transcript-version=\"2\" data-rw-start=\"517.159\">you change that broke the automation too </span><span data-rw-transcript-version=\"2\" data-rw-start=\"519.56\">too often I&#39;ll see people just get rid </span><span data-rw-transcript-version=\"2\" data-rw-start=\"521.399\">of an entire section and then start </span><span data-rw-transcript-version=\"2\" data-rw-start=\"523\">running things and now it&#39;s like okay </span><span data-rw-transcript-version=\"2\" data-rw-start=\"524.68\">well we&#39;re back at square one because we </span><span data-rw-transcript-version=\"2\" data-rw-start=\"526.36\">don&#39;t know exactly what happened so you </span><span data-rw-transcript-version=\"2\" data-rw-start=\"527.959\">want to get to the point where you&#39;re </span><span data-rw-transcript-version=\"2\" data-rw-start=\"528.88\">adding one sentence you&#39;re hitting run </span><span data-rw-transcript-version=\"2\" data-rw-start=\"530.76\">and it&#39;s either fixing it or it&#39;s not </span><span data-rw-transcript-version=\"2\" data-rw-start=\"532.12\">fixing it and then you know exactly what </span><span data-rw-transcript-version=\"2\" data-rw-start=\"533.72\">to do you know exactly what broke or </span><span data-rw-transcript-version=\"2\" data-rw-start=\"535.519\">fixed your Automation and so one thing </span><span data-rw-transcript-version=\"2\" data-rw-start=\"537.32\">honestly I want to admit here is I </span><span data-rw-transcript-version=\"2\" data-rw-start=\"539.079\">created that system prompt generator on </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"540.6\">my fre School Community um and really </span><span data-rw-transcript-version=\"2\" data-rw-start=\"543.04\">the idea there was just to help you with </span><span data-rw-transcript-version=\"2\" data-rw-start=\"544.36\">the formatting because I don&#39;t really </span><span data-rw-transcript-version=\"2\" data-rw-start=\"546.2\">use that thing anymore because the fact </span><span data-rw-transcript-version=\"2\" data-rw-start=\"547.8\">that doing that is very proactive in the </span><span data-rw-transcript-version=\"2\" data-rw-start=\"549.839\">sense that we&#39;re dropping in a sort of a </span><span data-rw-transcript-version=\"2\" data-rw-start=\"552.079\">query into chat GPT the custom GPT I </span><span data-rw-transcript-version=\"2\" data-rw-start=\"554.16\">built it&#39;s giving us a system prompt and </span><span data-rw-transcript-version=\"2\" data-rw-start=\"556.12\">then we&#39;re putting that whole thing in </span><span data-rw-transcript-version=\"2\" data-rw-start=\"557.24\">the agent and then just running it and </span><span data-rw-transcript-version=\"2\" data-rw-start=\"558.56\">testing it and in that case you don&#39;t </span><span data-rw-transcript-version=\"2\" data-rw-start=\"560.24\">know exactly what you should change to </span><span data-rw-transcript-version=\"2\" data-rw-start=\"561.6\">fix all issues so just wanted to throw </span><span data-rw-transcript-version=\"2\" data-rw-start=\"564.079\">that out there I don&#39;t really use that </span><span data-rw-transcript-version=\"2\" data-rw-start=\"565.44\">system prompt generator anymore I now </span><span data-rw-transcript-version=\"2\" data-rw-start=\"568.079\">always like handcraft my promp </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"570.32\">anyways from there what you want to do </span><span data-rw-transcript-version=\"2\" data-rw-start=\"571.56\">is scale up slowly so once you confirm </span><span data-rw-transcript-version=\"2\" data-rw-start=\"573.76\">that the agent is consistently working </span><span data-rw-transcript-version=\"2\" data-rw-start=\"575.2\">with its first tool and its first rule </span><span data-rw-transcript-version=\"2\" data-rw-start=\"576.72\">and its prompt then you can slowly add </span><span data-rw-transcript-version=\"2\" data-rw-start=\"578.68\">more tools and more prompt rules so </span><span data-rw-transcript-version=\"2\" data-rw-start=\"581.839\">here&#39;s an example you&#39;ll add a tool </span><span data-rw-transcript-version=\"2\" data-rw-start=\"583.519\">you&#39;ll add a sentence in the prompt </span><span data-rw-transcript-version=\"2\" data-rw-start=\"584.76\">about the tool test out a few scenarios </span><span data-rw-transcript-version=\"2\" data-rw-start=\"587.12\">if it&#39;s working well you can then add </span><span data-rw-transcript-version=\"2\" data-rw-start=\"588.8\">another tool and keep testing out and </span><span data-rw-transcript-version=\"2\" data-rw-start=\"590.279\">slowly adding pieces but if it&#39;s not </span><span data-rw-transcript-version=\"2\" data-rw-start=\"592.2\">then obviously you&#39;ll just hard prompt </span><span data-rw-transcript-version=\"2\" data-rw-start=\"593.399\">in the changes of what it&#39;s doing wrong </span><span data-rw-transcript-version=\"2\" data-rw-start=\"595.04\">and how to fix that from there you&#39;ll </span><span data-rw-transcript-version=\"2\" data-rw-start=\"596.64\">just test out a few more scenarios um </span><span data-rw-transcript-version=\"2\" data-rw-start=\"598.8\">and then you can just kind of rinse and </span><span data-rw-transcript-version=\"2\" data-rw-start=\"600\">repeat until you have all the </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"601.12\">functionality that you&#39;re looking for </span><span data-rw-transcript-version=\"2\" data-rw-start=\"603.079\">all right now let&#39;s look at the core </span><span data-rw-transcript-version=\"2\" data-rw-start=\"604.279\">components of an effective prompt each </span><span data-rw-transcript-version=\"2\" data-rw-start=\"606.399\">agent you design should follow a </span><span data-rw-transcript-version=\"2\" data-rw-start=\"607.68\">structured prompt to ensure Clarity </span><span data-rw-transcript-version=\"2\" data-rw-start=\"609.24\">consistency and efficiency now there&#39;s a </span><span data-rw-transcript-version=\"2\" data-rw-start=\"612.04\">ton of different types of prompting you </span><span data-rw-transcript-version=\"2\" data-rw-start=\"613.48\">can do based on the role of agent </span><span data-rw-transcript-version=\"2\" data-rw-start=\"616.079\">ultimately they&#39;re going to fall under </span><span data-rw-transcript-version=\"2\" data-rw-start=\"617.24\">one of these three buckets which is </span><span data-rw-transcript-version=\"2\" data-rw-start=\"618.8\">toolbase prompting conversational </span><span data-rw-transcript-version=\"2\" data-rw-start=\"620.68\">prompting or like content creation type </span><span data-rw-transcript-version=\"2\" data-rw-start=\"622.44\">prompting and then categorization SL </span><span data-rw-transcript-version=\"2\" data-rw-start=\"624.6\">evaluation prompting and the reason I </span><span data-rw-transcript-version=\"2\" data-rw-start=\"626.24\">wanted to highlight that is because </span><span data-rw-transcript-version=\"2\" data-rw-start=\"627.36\">obviously if we&#39;re creating like a </span><span data-rw-transcript-version=\"2\" data-rw-start=\"628.519\">Content creation a agent we&#39;re not going </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"630.04\">to say what tools it has if it has no </span><span data-rw-transcript-version=\"2\" data-rw-start=\"631.519\">tools but um yeah just wanted to throw </span><span data-rw-transcript-version=\"2\" data-rw-start=\"633.279\">that out there and another thing to keep </span><span data-rw-transcript-version=\"2\" data-rw-start=\"634.959\">in mind is I really like using markdown </span><span data-rw-transcript-version=\"2\" data-rw-start=\"637.079\">formatting for my prompts as you can see </span><span data-rw-transcript-version=\"2\" data-rw-start=\"638.639\">these examples we&#39;ve got like different </span><span data-rw-transcript-version=\"2\" data-rw-start=\"640.04\">headers with pound signs and we&#39;re able </span><span data-rw-transcript-version=\"2\" data-rw-start=\"642.079\">to specify like different sections we </span><span data-rw-transcript-version=\"2\" data-rw-start=\"643.48\">can use bulleted lists we can use </span><span data-rw-transcript-version=\"2\" data-rw-start=\"644.88\">numbered list I&#39;ve seen some people talk </span><span data-rw-transcript-version=\"2\" data-rw-start=\"646.76\">about using XML for prompting I&#39;m not a </span><span data-rw-transcript-version=\"2\" data-rw-start=\"649\">huge fan of it because um as far as </span><span data-rw-transcript-version=\"2\" data-rw-start=\"651\">human readability I think markdown just </span><span data-rw-transcript-version=\"2\" data-rw-start=\"652.6\">makes a lot more sense so that&#39;s what I </span><span data-rw-transcript-version=\"2\" data-rw-start=\"654.6\">do anyways now let&#39;s talk about the main </span><span data-rw-transcript-version=\"2\" data-rw-start=\"656.6\">sections that I include in my prompts </span><span data-rw-transcript-version=\"2\" data-rw-start=\"658.399\">the first one is always a background so </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"660.2\">whether this is a role or a purpose or a </span><span data-rw-transcript-version=\"2\" data-rw-start=\"663.04\">context I typically call it something </span><span data-rw-transcript-version=\"2\" data-rw-start=\"664.959\">like an overview but anyways just giving </span><span data-rw-transcript-version=\"2\" data-rw-start=\"666.839\">it some sort of background that defines </span><span data-rw-transcript-version=\"2\" data-rw-start=\"668.6\">who the agent is what its overall goal </span><span data-rw-transcript-version=\"2\" data-rw-start=\"670.6\">is and this really sets the foundation </span><span data-rw-transcript-version=\"2\" data-rw-start=\"672.48\">of you know sort of identifying their </span><span data-rw-transcript-version=\"2\" data-rw-start=\"674\">Persona their behavior and if you don&#39;t </span><span data-rw-transcript-version=\"2\" data-rw-start=\"676.48\">have the section the agent is kind of </span><span data-rw-transcript-version=\"2\" data-rw-start=\"678.24\">going to lack Direction and it&#39;s going </span><span data-rw-transcript-version=\"2\" data-rw-start=\"679.76\">to generate really generic or unfocused </span><span data-rw-transcript-version=\"2\" data-rw-start=\"682.24\">outputs so set its role and this could </span><span data-rw-transcript-version=\"2\" data-rw-start=\"685.44\">be really simple you can kind of follow </span><span data-rw-transcript-version=\"2\" data-rw-start=\"686.639\">this template of you are a blank agent </span><span data-rw-transcript-version=\"2\" data-rw-start=\"688.44\">designed to do blank your goal is blank </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"690.6\">so you are a travel planning AI </span><span data-rw-transcript-version=\"2\" data-rw-start=\"692.2\">assistant that helps users plan their </span><span data-rw-transcript-version=\"2\" data-rw-start=\"693.519\">vacations your goal is to provide </span><span data-rw-transcript-version=\"2\" data-rw-start=\"695.44\">detailed personalized travel itery based </span><span data-rw-transcript-version=\"2\" data-rw-start=\"697.639\">on the user&#39;s input then we have tools </span><span data-rw-transcript-version=\"2\" data-rw-start=\"700.12\">this is obviously super super important </span><span data-rw-transcript-version=\"2\" data-rw-start=\"701.839\">when we&#39;re doing sort of </span><span data-rw-transcript-version=\"2\" data-rw-start=\"702.88\">non-deterministic agent workflows where </span><span data-rw-transcript-version=\"2\" data-rw-start=\"705.04\">they&#39;re going to have a bunch of </span><span data-rw-transcript-version=\"2\" data-rw-start=\"705.76\">different tools and they have to use </span><span data-rw-transcript-version=\"2\" data-rw-start=\"707\">their brain their chat model to </span><span data-rw-transcript-version=\"2\" data-rw-start=\"708.959\">understand which tool does what and when </span><span data-rw-transcript-version=\"2\" data-rw-start=\"710.6\">to use each one so this section tells </span><span data-rw-transcript-version=\"2\" data-rw-start=\"712.56\">the agent what tools it has access to </span><span data-rw-transcript-version=\"2\" data-rw-start=\"714\">and when to use them it ensures the AI </span><span data-rw-transcript-version=\"2\" data-rw-start=\"715.92\">selects the right tool for the right </span><span data-rw-transcript-version=\"2\" data-rw-start=\"717.32\">task and a well structured tool section </span><span data-rw-transcript-version=\"2\" data-rw-start=\"719.44\">prevents confusion and obviously makes </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"721.04\">the AI more efficient so here&#39;s an </span><span data-rw-transcript-version=\"2\" data-rw-start=\"722.839\">example of what it could look like we </span><span data-rw-transcript-version=\"2\" data-rw-start=\"724.279\">have like the markdown header of tools </span><span data-rw-transcript-version=\"2\" data-rw-start=\"726.56\">and then we have like a numbered list </span><span data-rw-transcript-version=\"2\" data-rw-start=\"727.76\">we&#39;re also showing that the tools are in </span><span data-rw-transcript-version=\"2\" data-rw-start=\"729.16\">bold this doesn&#39;t have to be the way you </span><span data-rw-transcript-version=\"2\" data-rw-start=\"730.8\">do it but sometimes I like to show them </span><span data-rw-transcript-version=\"2\" data-rw-start=\"732.279\">in bold um and it&#39;s you can see it&#39;s </span><span data-rw-transcript-version=\"2\" data-rw-start=\"734.72\">really simple it&#39;s it&#39;s not too much </span><span data-rw-transcript-version=\"2\" data-rw-start=\"736.24\">it&#39;s not overwhelming it&#39;s not too um </span><span data-rw-transcript-version=\"2\" data-rw-start=\"738.839\">you know it&#39;s just very clear Google </span><span data-rw-transcript-version=\"2\" data-rw-start=\"740.24\">search use this tool when the user asks </span><span data-rw-transcript-version=\"2\" data-rw-start=\"741.959\">for real- time information email sender </span><span data-rw-transcript-version=\"2\" data-rw-start=\"744.199\">use this tool when the user wants to </span><span data-rw-transcript-version=\"2\" data-rw-start=\"745.6\">send a message super simple and what </span><span data-rw-transcript-version=\"2\" data-rw-start=\"747.399\">else you can do is you can Define when </span><span data-rw-transcript-version=\"2\" data-rw-start=\"748.8\">to use each tool so right here we say we </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"751.12\">have a contact database use this tool to </span><span data-rw-transcript-version=\"2\" data-rw-start=\"752.959\">get contact information you must use </span><span data-rw-transcript-version=\"2\" data-rw-start=\"754.959\">this before using the email generator </span><span data-rw-transcript-version=\"2\" data-rw-start=\"756.839\">tool because otherwise it won&#39;t know who </span><span data-rw-transcript-version=\"2\" data-rw-start=\"758.72\">to send the email to so you can actually </span><span data-rw-transcript-version=\"2\" data-rw-start=\"760.24\">Define these little rules keep it very </span><span data-rw-transcript-version=\"2\" data-rw-start=\"762.079\">clear within the actual tool layer of </span><span data-rw-transcript-version=\"2\" data-rw-start=\"765\">the prompt and then we have instructions </span><span data-rw-transcript-version=\"2\" data-rw-start=\"767.079\">I usually call them rules as you can see </span><span data-rw-transcript-version=\"2\" data-rw-start=\"769\">um you could maybe even call it like a </span><span data-rw-transcript-version=\"2\" data-rw-start=\"770.079\">standard operating procedure but what </span><span data-rw-transcript-version=\"2\" data-rw-start=\"771.88\">this does it outlines specific rules for </span><span data-rw-transcript-version=\"2\" data-rw-start=\"774\">the agent to follow it dictates the </span><span data-rw-transcript-version=\"2\" data-rw-start=\"775.76\">order of operations at a high level just </span><span data-rw-transcript-version=\"2\" data-rw-start=\"778.04\">keep in mind you don&#39;t want to say do </span><span data-rw-transcript-version=\"2\" data-rw-start=\"779.519\">this in this order every time because </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"781.72\">then it&#39;s like why are you even using an </span><span data-rw-transcript-version=\"2\" data-rw-start=\"782.959\">agent the whole point of an agent is </span><span data-rw-transcript-version=\"2\" data-rw-start=\"784.48\">that it&#39;s you know it&#39;s taking an input </span><span data-rw-transcript-version=\"2\" data-rw-start=\"786.32\">and something happens in this black boox </span><span data-rw-transcript-version=\"2\" data-rw-start=\"787.839\">where it&#39;s calling different tools it </span><span data-rw-transcript-version=\"2\" data-rw-start=\"789.24\">may call this one twice it may call this </span><span data-rw-transcript-version=\"2\" data-rw-start=\"790.639\">one three times it may call them none at </span><span data-rw-transcript-version=\"2\" data-rw-start=\"792.279\">all um the idea is that it&#39;s variable </span><span data-rw-transcript-version=\"2\" data-rw-start=\"794.839\">it&#39;s not deterministic so if you&#39;re </span><span data-rw-transcript-version=\"2\" data-rw-start=\"796.839\">saying do it and this every time then </span><span data-rw-transcript-version=\"2\" data-rw-start=\"799.199\">you should just be using a sequential </span><span data-rw-transcript-version=\"2\" data-rw-start=\"800.44\">workflow it shouldn&#39;t even be an agent </span><span data-rw-transcript-version=\"2\" data-rw-start=\"802.279\">but obviously the rule section helps </span><span data-rw-transcript-version=\"2\" data-rw-start=\"804.04\">prevent misunderstanding so here&#39;s like </span><span data-rw-transcript-version=\"2\" data-rw-start=\"805.88\">a high Lev instruction right you&#39;re </span><span data-rw-transcript-version=\"2\" data-rw-start=\"807.6\">greeting the user politely if the user </span><span data-rw-transcript-version=\"2\" data-rw-start=\"809.56\">provides incomplete information you ask </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"811.04\">follow-up questions use the available </span><span data-rw-transcript-version=\"2\" data-rw-start=\"812.88\">tools only when necessary structure your </span><span data-rw-transcript-version=\"2\" data-rw-start=\"814.8\">response in clear concise sentences so </span><span data-rw-transcript-version=\"2\" data-rw-start=\"816.72\">this isn&#39;t saying like you do this in </span><span data-rw-transcript-version=\"2\" data-rw-start=\"818\">this order every time it&#39;s just saying </span><span data-rw-transcript-version=\"2\" data-rw-start=\"819.199\">when this happens do this if this </span><span data-rw-transcript-version=\"2\" data-rw-start=\"820.76\">happens do that so here&#39;s an example for </span><span data-rw-transcript-version=\"2\" data-rw-start=\"823.16\">AI task manager when a task is added you </span><span data-rw-transcript-version=\"2\" data-rw-start=\"825.399\">confirm with the user if a deadline is </span><span data-rw-transcript-version=\"2\" data-rw-start=\"827.24\">missing ask the user to specify one if a </span><span data-rw-transcript-version=\"2\" data-rw-start=\"829.44\">task priority is high send a </span><span data-rw-transcript-version=\"2\" data-rw-start=\"830.639\">notification store all tasks in the task </span><span data-rw-transcript-version=\"2\" data-rw-start=\"832.959\">management system so it&#39;s very clear too </span><span data-rw-transcript-version=\"2\" data-rw-start=\"835.32\">um we don&#39;t need all these extra filler </span><span data-rw-transcript-version=\"2\" data-rw-start=\"836.839\">words because remember the AI can </span><span data-rw-transcript-version=\"2\" data-rw-start=\"838.8\">understand what you&#39;re saying as long as </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"840.199\">it has like the actual context words </span><span data-rw-transcript-version=\"2\" data-rw-start=\"842.639\">that have meaning you don&#39;t need all </span><span data-rw-transcript-version=\"2\" data-rw-start=\"843.759\">these little fillers um you don&#39;t need </span><span data-rw-transcript-version=\"2\" data-rw-start=\"845.6\">these long sentences so moving on to </span><span data-rw-transcript-version=\"2\" data-rw-start=\"847.839\">examples which You Know sample inputs </span><span data-rw-transcript-version=\"2\" data-rw-start=\"849.8\">and outputs and also actions within </span><span data-rw-transcript-version=\"2\" data-rw-start=\"851.959\">those between the inputs and outputs but </span><span data-rw-transcript-version=\"2\" data-rw-start=\"854.04\">this helps the understand Expectations </span><span data-rw-transcript-version=\"2\" data-rw-start=\"855.8\">by showing real examples and these are </span><span data-rw-transcript-version=\"2\" data-rw-start=\"857.639\">the things that I love to hard code in </span><span data-rw-transcript-version=\"2\" data-rw-start=\"859.12\">there hard prompt in there because like </span><span data-rw-transcript-version=\"2\" data-rw-start=\"861.6\">I said there&#39;s no point in showing an </span><span data-rw-transcript-version=\"2\" data-rw-start=\"863.04\">example if the AI was already going to </span><span data-rw-transcript-version=\"2\" data-rw-start=\"865.079\">get that input and output right every </span><span data-rw-transcript-version=\"2\" data-rw-start=\"866.44\">time you just want to see what it&#39;s </span><span data-rw-transcript-version=\"2\" data-rw-start=\"867.839\">messing up on and then put put an </span><span data-rw-transcript-version=\"2\" data-rw-start=\"869.36\">example in and show it how to fix itself </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"871.72\">so more clear guidance and it&#39;s going to </span><span data-rw-transcript-version=\"2\" data-rw-start=\"873.56\">give you more accurate and consistent </span><span data-rw-transcript-version=\"2\" data-rw-start=\"874.68\">outputs here&#39;s an example where we get </span><span data-rw-transcript-version=\"2\" data-rw-start=\"876.36\">the input that says can you generate a </span><span data-rw-transcript-version=\"2\" data-rw-start=\"877.8\">trip plan for Paris for 5 days the </span><span data-rw-transcript-version=\"2\" data-rw-start=\"880.16\">action you&#39;re going to take is first </span><span data-rw-transcript-version=\"2\" data-rw-start=\"881.16\">call the trip Planner tool to get X Y </span><span data-rw-transcript-version=\"2\" data-rw-start=\"883.199\">and Z then you&#39;re going to take another </span><span data-rw-transcript-version=\"2\" data-rw-start=\"885.079\">action which is calling the email tool </span><span data-rw-transcript-version=\"2\" data-rw-start=\"886.72\">to send the itinerary and then finally </span><span data-rw-transcript-version=\"2\" data-rw-start=\"888.72\">the output should look something like </span><span data-rw-transcript-version=\"2\" data-rw-start=\"890\">this here&#39;s a 5day Paris itinerary day </span><span data-rw-transcript-version=\"2\" data-rw-start=\"892.399\">one day two day three day four day five </span><span data-rw-transcript-version=\"2\" data-rw-start=\"895.24\">and then I typically end my prompts with </span><span data-rw-transcript-version=\"2\" data-rw-start=\"897\">like a final notes or important reminder </span><span data-rw-transcript-version=\"2\" data-rw-start=\"898.839\">say section which just has like some </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"900.519\">miscellaneous but important reminders it </span><span data-rw-transcript-version=\"2\" data-rw-start=\"902.48\">could be current date and time it could </span><span data-rw-transcript-version=\"2\" data-rw-start=\"903.759\">be rate limits it could be um something </span><span data-rw-transcript-version=\"2\" data-rw-start=\"906.44\">as simple as like don&#39;t put any emojis </span><span data-rw-transcript-version=\"2\" data-rw-start=\"908.12\">in the output um and sometimes why I do </span><span data-rw-transcript-version=\"2\" data-rw-start=\"911.88\">this is because something can get lost </span><span data-rw-transcript-version=\"2\" data-rw-start=\"914.44\">within your prompt and sometimes like I </span><span data-rw-transcript-version=\"2\" data-rw-start=\"916.48\">I&#39;ve thrown the today&#39;s date up top but </span><span data-rw-transcript-version=\"2\" data-rw-start=\"918.32\">then it only actually realizes it when </span><span data-rw-transcript-version=\"2\" data-rw-start=\"919.8\">it&#39;s in the bottom so playing around </span><span data-rw-transcript-version=\"2\" data-rw-start=\"921.56\">with the actual like location of your </span><span data-rw-transcript-version=\"2\" data-rw-start=\"923\">things can be sometimes help it out um </span><span data-rw-transcript-version=\"2\" data-rw-start=\"925.839\">and so having a final notes section at </span><span data-rw-transcript-version=\"2\" data-rw-start=\"927.24\">the bottom not with too many notes but </span><span data-rw-transcript-version=\"2\" data-rw-start=\"928.72\">just some quick things to remember like </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"930.839\">always format responses is markdown </span><span data-rw-transcript-version=\"2\" data-rw-start=\"932.6\">here&#39;s today&#39;s date if unsure about an </span><span data-rw-transcript-version=\"2\" data-rw-start=\"934.399\">answer say I don&#39;t have that information </span><span data-rw-transcript-version=\"2\" data-rw-start=\"936.44\">so just little miscellaneous things like </span><span data-rw-transcript-version=\"2\" data-rw-start=\"938\">that now I wanted to quickly talk about </span><span data-rw-transcript-version=\"2\" data-rw-start=\"939.8\">some honorable mentions because like I </span><span data-rw-transcript-version=\"2\" data-rw-start=\"941.72\">said earlier The Prompt sections and </span><span data-rw-transcript-version=\"2\" data-rw-start=\"943.959\">components varies based on the actual </span><span data-rw-transcript-version=\"2\" data-rw-start=\"946.519\">type of agent you&#39;re building so in the </span><span data-rw-transcript-version=\"2\" data-rw-start=\"948.519\">case of like a content creator agent </span><span data-rw-transcript-version=\"2\" data-rw-start=\"950.199\">that has no tools um you wouldn&#39;t give </span><span data-rw-transcript-version=\"2\" data-rw-start=\"952.48\">it a tool section but you may want to </span><span data-rw-transcript-version=\"2\" data-rw-start=\"953.88\">give it an output section so here&#39;s an </span><span data-rw-transcript-version=\"2\" data-rw-start=\"955.6\">output section that I had recently done </span><span data-rw-transcript-version=\"2\" data-rw-start=\"956.959\">for my voice travel agent um which if </span><span data-rw-transcript-version=\"2\" data-rw-start=\"959.56\">you want to see that video I&#39;ll drop a </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"960.92\">link right here but what I did was I </span><span data-rw-transcript-version=\"2\" data-rw-start=\"962.88\">just basically included rules for the </span><span data-rw-transcript-version=\"2\" data-rw-start=\"964.12\">output because the output was very </span><span data-rw-transcript-version=\"2\" data-rw-start=\"965.48\">specific with HTML format and it had to </span><span data-rw-transcript-version=\"2\" data-rw-start=\"967.68\">be very structured and I wanted </span><span data-rw-transcript-version=\"2\" data-rw-start=\"968.92\">horizontal lines so I created a whole </span><span data-rw-transcript-version=\"2\" data-rw-start=\"971\">section dedicated towards output format </span><span data-rw-transcript-version=\"2\" data-rw-start=\"972.92\">as you can see and because I Ed three </span><span data-rw-transcript-version=\"2\" data-rw-start=\"975.36\">pound signs for these subsections the </span><span data-rw-transcript-version=\"2\" data-rw-start=\"977.519\">agent was able to understand that all </span><span data-rw-transcript-version=\"2\" data-rw-start=\"979.12\">this rolled up into the format of the </span><span data-rw-transcript-version=\"2\" data-rw-start=\"981.68\">output section right here so anyways I </span><span data-rw-transcript-version=\"2\" data-rw-start=\"983.72\">said the email should be structured as </span><span data-rw-transcript-version=\"2\" data-rw-start=\"985.16\">HTML that will be sent through email use </span><span data-rw-transcript-version=\"2\" data-rw-start=\"987.24\">headers to separate each section add a </span><span data-rw-transcript-version=\"2\" data-rw-start=\"989.24\">horizontal line to each section um I </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"991.16\">said what it what should be in the </span><span data-rw-transcript-version=\"2\" data-rw-start=\"992.24\">subject I said what should be in the </span><span data-rw-transcript-version=\"2\" data-rw-start=\"993.639\">introduction section I said how you </span><span data-rw-transcript-version=\"2\" data-rw-start=\"995.36\">should list these departure dates return </span><span data-rw-transcript-version=\"2\" data-rw-start=\"997.36\">dates flights for the flight section um </span><span data-rw-transcript-version=\"2\" data-rw-start=\"999.639\">here&#39;s something where I basically gave </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1000.959\">it like the HTML image tag and I showed </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1003.68\">how to put the image in there I showed </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1005.56\">to make I said like make a inline image </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1007.68\">rather than um an attachment I said to </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1010.68\">have each resort with a clickable link I </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1012.399\">also was able to adjust the actual width </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1014.639\">percentage of the image by specifying </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1016.72\">that here in the prompt um so yeah this </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1019.759\">was just getting really detailed about </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"1021.04\">the way we want the actual format to be </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1022.759\">structured you can see here we have </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1023.92\">activities that I actually misspelled in </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1025.559\">my agent but it didn&#39;t matter um and </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1027.919\">then finally just a sign off and then </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1029.88\">just some final additional honorable </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1031.36\">mentions something like memory and </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1033.4\">context management um some reasoning </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1035.959\">some error handling but typically I </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1037.799\">think that these can be just kind of one </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1039.52\">or two sentences that can usually go in </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1041.079\">like the rules or instructions section </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1043.319\">but it depends on the use case like I </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1045.039\">said so if it needs to be pretty robust </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1046.919\">then creating an individual section at </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1048.48\">the bottom called memory or error </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"1050.64\">handling could be worth it it just </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1052.64\">depends on like I said the actual use </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1055.48\">case and the goal of the agent Okay cool </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1057.24\">so now that we&#39;ve got through that </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1058.28\">document let&#39;s hop into Ed end and we&#39;ll </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1059.919\">just do some really quick examples of </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1061.44\">some reactive live prompting okay so I&#39;m </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1064.2\">going to hit tab I&#39;m going to type in AI </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1065.559\">agent we&#39;re going to grab one and we&#39;re </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1067.039\">going to be communicating with it </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1068.4\">through this connected chat trigger node </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1070.4\">now I&#39;m going to add a chat model real </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1071.6\">quick just so we can get set up up and </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1073.039\">running we have our 40 mini we&#39;re good </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1074.88\">to go and just a reminder there is zero </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1077.159\">system prompt in here all it is is is </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1078.919\">that you are a helpful assistant so </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"1081.2\">what&#39;s the first thing to do is we want </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1082.24\">to add a tool test it out so I&#39;m going </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1084.24\">to add a um Google Calendar tool I&#39;m </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1087.2\">just going to obviously select my </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1088.919\">calendar to pull from I&#39;m going to you </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1091.48\">know fill in those parameters using the </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1092.76\">model by clicking that button and I&#39;m </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1094.48\">just going to say this one&#39;s called </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1095.44\">create event so we have create event and </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1098.76\">so now we&#39;re going to do our test and </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1099.799\">see if the tool is working properly I&#39;m </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1101.64\">going to say create an event for tonight </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1105.2\">at 700 p.m. so send this off we should </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1107.76\">see the agents ble to understand to use </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"1110.039\">this create event tool because it&#39;s </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1111.44\">using an automatic description but now </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1113.799\">we see an issue it created the start </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1115.679\">time for October 12th 2023 and the end </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1118.679\">time for also October 12th 2023 so this </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1121.039\">is our first instance of reactive </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1122.36\">prompting it&#39;s calling the tool </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1123.88\">correctly so we don&#39;t really need to </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1125.559\">prompt in like the actual tool name yet </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1127.96\">um it&#39;s probably best practice just to </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1129.799\">just to do so but first i&#39;m just going </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1131.28\">to give an overview and say you are a </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1134.52\">calendar actually no I&#39;m just going to </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1136.2\">say you are a helpful assistant because </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1139.12\">that&#39;s all it is right now and we don&#39;t </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"1140.28\">know what else we&#39;re adding into this </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1141.64\">guy but now we&#39;ll just say tools is </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1145.039\">create event just so it&#39;s aware use this </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1147.84\">to create an event and then we want to </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1151.4\">say final notes um here is the current </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1156.64\">date and time because that&#39;s where it </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1159.08\">messed up is because it didn&#39;t know the </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1160.32\">current date and time even though it was </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1161.919\">able to call the correct tool so now </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1164.24\">we&#39;ll just send this same thing off </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1165.6\">again and that should have fixed it we </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1167.44\">reactively fixed the a err and um we&#39;re </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"1170.24\">just making sure that it is working as </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1172.2\">it should now okay there we go it just </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1174.24\">hit the tool and it says the event has </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1175.6\">been created for tonight at 700 p.m. if </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1177.919\">I click into my calendar you can see </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1179.159\">right there we have the event that was </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1180.24\">just created so cool now that&#39;s working </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1182.6\">what we&#39;re going to do now is add </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1183.64\">another tool so we&#39;ll drag this one over </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1185.039\">here and let&#39;s say we want to do a send </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1187.52\">email tool we&#39;re going to send a message </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1189.32\">we&#39;re going to change the name to send </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1191.36\">email and just so you guys are aware </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1192.88\">like how it&#39;s able to know right here </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1194.84\">tool description we&#39;re setting </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1196.039\">automatically if we set manually we </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1198.039\">would just say you know use this tool to </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"1200.159\">send an email but we can just keep it </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1201.799\">simple leave it as set automatic I&#39;m </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1203.799\">going to turn on to subject and message </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1206.4\">as defined by the model and that&#39;s going </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1209.08\">to be it so now we just want to test </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1210.4\">this thing again before we add any </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1211.679\">prompts we&#39;ll say send an email to Bob </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1215.72\">example.com </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1217.36\">asking what&#39;s up we&#39;ll send this off </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1219.88\">hopefully it&#39;s hitting the right tool so </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1221.12\">we should see there we go it hit the </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1222.24\">send email tool and the email got sent </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1224.48\">we can come in here and check everything </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1225.799\">was sent correctly although what we </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1227.44\">noticed is it&#39;s signing off as best </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1229.48\">placeholder your name and we don&#39;t want </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"1231.039\">to do that so let&#39;s come in here and </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1233\">let&#39;s add a tool section for this tool </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1236.12\">and we&#39;ll tell it how to how to act so </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1238.36\">send email that&#39;s another tool it has </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1240.159\">and we&#39;re going to say use this to send </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1242.28\">an </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1243.08\">email then we&#39;re going to say sign off </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1245.6\">emails as Frank okay so that&#39;s </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1249.08\">reactively fixing an error we saw I&#39;m </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1251.159\">just now going to send off that same </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1252.52\">query we already know that it knows how </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1254.159\">to call the tool so it&#39;s going to do </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1255.28\">that once again there we go we see the </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1257.12\">email was sent and now we have a a sign </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1258.84\">off as Frank so that&#39;s two problems </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"1260.76\">we&#39;ve seen and then we&#39;ve added one </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1262.64\">super short line into the system prompt </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1264.48\">and fixed those problems now let&#39;s do </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1266.4\">something else let&#39;s say in Gmail we </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1268.559\">want to be able to label an email and in </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1272.76\">order to label an email as you can see </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1275.52\">add label to a message we need a message </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1277.6\">ID and we need a label name or an ID for </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1280.279\">that label and this is we could choose </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1282.08\">from a list but more realistically we </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1283.919\">want the label ID to be pulled in </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1285.4\">dynamically so if we need to get these </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1287.64\">two things what we have to do is first </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1289.279\">get emails and also get labels so first </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"1291.559\">I&#39;m going to do get many I&#39;m going to </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1293.559\">say this is using you know we&#39;re we&#39;re </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1295.88\">calling this tool get get emails and </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1297.919\">then we don&#39;t want to return all we want </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1300.08\">to do a limit and we also want to choose </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1302\">from a sender so we&#39;ll have this also be </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1304.039\">dynamically chosen so cool we don&#39;t have </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1308\">a system prompt in here about this tool </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1309.52\">but we&#39;re just going to say get my last </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1313.08\">email from Nate herkelman so we&#39;ll send </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1316.6\">that off it should be hitting the get </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1317.76\">emails tool filling in Nate herkelman as </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1319.72\">the sender and now we can see that we </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"1321.679\">just got this email with the subject </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1322.84\">hello we have the message ID right here </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1325.36\">so that&#39;s perfect and now what we need </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1327.039\">to do is we need to create a tool to get </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1328.919\">the label ID so I&#39;m going to come in </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1330.52\">here and I&#39;m going to say um get many </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1333.039\">and we&#39;re going to go to label we&#39;re </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1335.48\">going to do um actually we&#39;ll just </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1338.52\">return all that works there&#39;s not too </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1340\">many labels in there um and we have to </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1341.799\">name this tool of course so we&#39;re going </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1342.96\">to call this get labels so once again </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1346.32\">there&#39;s no Tools in or no prompt in here </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1348.279\">about these two tools at all and we&#39;re </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"1350.559\">going to say get my </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1352.96\">email labels we&#39;ll see if it hits the </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1355.039\">right tool there we go it did and it is </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1358.6\">going to basically just tell us you know </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1360.279\">here they are so here are our different </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1361.88\">labels um and here are the ones that we </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1364.6\">created so promotion customer support </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1366.64\">high priority finance and billing cool </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1369.12\">so now we can try to actually label an </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1371.88\">email so that email that we just got </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1373.96\">from um from Nate herkelman that said </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1376.72\">hello let&#39;s try to label that one so I&#39;m </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1378.88\">going to add another Gmail tool and this </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"1381\">one&#39;s going to be add a label to a </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1382.919\">message and we need the message ID and </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1384.88\">the label ID so I&#39;m just going to fill </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1386.84\">these in with the model parameter and </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1389\">I&#39;m going to call this tool add label so </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1393.12\">there&#39;s no prompting </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1394.52\">for these three tools right here but </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1396.799\">we&#39;re going to try it out anyway and see </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1398\">what happens so add a promotion label to </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1402.64\">my last email </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1404.559\">from Nate </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1406.6\">herkelman send that off see what happens </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1409.32\">it&#39;s getting emails it tried to add a </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"1411.2\">label before so now we&#39;re kind of we got </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1413.72\">in that weird loop as you could see it </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1415.32\">tried to add a label before it got </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1417.159\">labeled so it didn&#39;t know what to do </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1418.72\">right um we&#39;ll click into here we&#39;ll see </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1421.2\">that I don&#39;t really exactly know what </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1423.279\">happened category promotions looking in </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1425.279\">my inbox anything sent from Nate </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1426.72\">herkelman we have the email right here </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1428.2\">but it wasn&#39;t accurately labeled so </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1430.4\">let&#39;s go back into our agent and prompt </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1432.24\">this thing a little bit better to </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1433.48\">understand how to use these tools so I&#39;m </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1435.559\">going to basically go into the tool </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1437.279\">section here and I&#39;m going to tell it </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1438.679\">about some more tools that it has so get </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"1441.039\">emails right this one was it was already </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1443.32\">working properly and we&#39;re just saying </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1445.08\">use this to get emails now we have to </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1448.4\">add get labels we&#39;re just saying use </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1451.72\">this to get </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1454.12\">labels um and we know that we want it to </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1457.4\">use this before actually trying to add a </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1458.96\">label but we&#39;re not going to add that </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1460.08\">yet we&#39;re going to see if it can work </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1461.279\">with a more minimalistic prompt and then </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1464\">finally I&#39;m going to say add labels and </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1465.88\">this one is use this tool to to add a </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1469.279\">label to an email okay so now that we </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"1472.72\">just have very basic tool descriptions </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1474.76\">in here we don&#39;t actually say like when </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1476.559\">to use it or how so I&#39;m going to try </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1478.399\">this exact same thing again add a </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1479.96\">promotion label to my last email from </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1482.039\">Nate herkelman once again it tried to </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1483.76\">use add label before and it tried to </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1485.399\">just call it twice as you can see so not </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1488.36\">working so back in email I just </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1490\">refreshed and you can see the email is </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1491.48\">still not labeled correctly so let&#39;s do </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1494.2\">some more reactive prompting what we&#39;re </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1495.76\">going to do now is just say in order to </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1497.72\">add labels so in the description of the </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1499.799\">AD Label tool I&#39;m going to say you must </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"1502.919\">first use get </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1505.799\">emails to get the message ID and </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1510.399\">actually I want to make sure that it </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1511.399\">knows that this is a tool so what I&#39;m </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1512.559\">going to do is I&#39;m going to put it in in </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1513.799\">a quote and I&#39;m going to make it the </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1515.48\">exact same capitalization as we defined </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1517.32\">over here so you must first use G emails </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1519.6\">to get the message </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1521\">ID of the email to </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1523.919\">label then you must use git labels </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1529.08\">to get the label ID of the email to </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"1533.52\">label okay so we added in this one line </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1536.48\">so if it&#39;s still not working we know </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1537.679\">that this line wasn&#39;t enough I&#39;m going </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1539.2\">to hit save and I&#39;m going to try the </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1540.279\">exact same thing again add a promotion </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1542.32\">label to my last email so it&#39;s getting </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1544.44\">now it&#39;s getting labels and now it still </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1546.24\">had an error with adding labels so we&#39;ll </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1547.64\">take a look in here um it said that it </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1549.96\">did it successfully but it obviously </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1551.32\">didn&#39;t it filled in label 127 blah blah </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1555.399\">blah so I think the message ID is </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1557.52\">correct but the lab ID is not so what </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1559.36\">I&#39;m going to try now is reactively </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"1561.399\">prompting in here I&#39;m going to say the </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1563.88\">label ID of the email to label we&#39;ll try </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1568.48\">that we&#39;ll see if that fixes it it may </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1570.12\">not we&#39;ll have to keep going so now </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1572.36\">we&#39;ll see it&#39;s going to at least it </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1573.32\">fixed the order right so it&#39;s getting </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1574.559\">emails and getting labels first and now </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1576.6\">look at that we successfully got a </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1578.84\">labeled email as you can see we have our </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1581.799\">um maybe we didn&#39;t we&#39;ll have to go into </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1583.96\">Gmail and actually check okay never mind </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1585.84\">we did as you can see we got the </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1587.32\">promotion email for this one from Nate </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1589.559\">herkelman that says hello and um yeah </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"1592.24\">that&#39;s just going to be a really cool </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1593.76\">simple example of how we sort of take on </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1597.279\">the process of running into errors </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1598.84\">adding lines and being able to know </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1600.6\">exactly what caused what so I know the </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1602.12\">video was kind of simple and I went </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1603.2\">through it pretty fast but I think that </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1605\">it&#39;s going to be a good lesson to look </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1606.36\">back on as far as the mindset you have </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1608.399\">in approaching reactively prompting and </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1610.399\">adding different tools and testing </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1611.52\">things because at the end of the day </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1613.279\">building agents is a super super test </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1615.64\">heavy iterative you know refining </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1617.96\">process process of build test change </span></p><p><span data-rw-transcript-version=\"2\" data-rw-start=\"1620.72\">build test change all that kind of stuff </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1622.399\">so as always really appreciate you guys </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1624.12\">making it to the end of this video if </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1625.84\">you learn something new or if you </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1627.279\">enjoyed it please leave a like it </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1628.36\">definitely helps me out a ton and I will </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1630.08\">see you guys in the next one thanks so </span><span data-rw-transcript-version=\"2\" data-rw-start=\"1631.64\">much everyone </span></p>",
+              "notes": ""
+            }
+          ]
+        }
+      }
+    ],
+    "Switch": [
+      {
+        "json": {
+          "update_id": 862387901,
+          "message": {
+            "message_id": 17,
+            "from": {
+              "id": 8457266226,
+              "is_bot": false,
+              "first_name": "Steph",
+              "language_code": "en"
+            },
+            "chat": {
+              "id": 8457266226,
+              "first_name": "Steph",
+              "type": "private"
+            },
+            "date": 1757625722,
+            "text": "https://read.readwise.io/filter/category%3Avideo/read/01k4gmjgnwfmg95t7smq2cyefe",
+            "entities": [
+              {
+                "offset": 0,
+                "length": 80,
+                "type": "url"
+              }
+            ],
+            "link_preview_options": {
+              "url": "https://read.readwise.io/filter/category%3Avideo/read/01k4gmjgnwfmg95t7smq2cyefe"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Stop and Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message": {
+      "main": [
+        []
+      ]
+    },
+    "Format for Telegram": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Draft",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Get Readwise Info and Classification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Readwise Info and Classification": {
+      "main": [
+        [
+          {
+            "node": "Draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Draft",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Create a document",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Format for Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Review For Humans",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Draft": {
+      "main": [
+        [
+          {
+            "node": "Review For Humans",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Review For Humans": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a database page": {
+      "main": [
+        []
+      ]
+    },
+    "Create a document": {
+      "main": [
+        [
+          {
+            "node": "Update a document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a document": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Create a database page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "7497cf0a-44be-4d61-928d-ba62abca44d3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b414ddedb1ec1283965839042be4cff8c36f19959284b5dc63b9f97e119817a9"
+  },
+  "id": "zkAc5l42jOteT5wV",
+  "tags": []
+}
