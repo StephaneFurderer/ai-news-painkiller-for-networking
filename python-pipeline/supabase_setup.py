@@ -135,8 +135,12 @@ class SupabaseRAGSetup:
         ALTER TABLE format_examples ENABLE ROW LEVEL SECURITY;
 
         -- Create policies (for now, allow all operations - adjust later for auth)
-        CREATE POLICY IF NOT EXISTS "Allow all operations on articles" ON articles FOR ALL USING (true);
-        CREATE POLICY IF NOT EXISTS "Allow all operations on format_examples" ON format_examples FOR ALL USING (true);
+        -- Drop existing policies first, then create new ones
+        DROP POLICY IF EXISTS "Allow all operations on articles" ON articles;
+        DROP POLICY IF EXISTS "Allow all operations on format_examples" ON format_examples;
+
+        CREATE POLICY "Allow all operations on articles" ON articles FOR ALL USING (true);
+        CREATE POLICY "Allow all operations on format_examples" ON format_examples FOR ALL USING (true);
 
         -- Create updated_at trigger function
         CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -148,10 +152,14 @@ class SupabaseRAGSetup:
         $$ language 'plpgsql';
 
         -- Add triggers to update updated_at automatically
-        CREATE TRIGGER IF NOT EXISTS update_articles_updated_at BEFORE UPDATE ON articles
+        -- Drop existing triggers first, then create new ones
+        DROP TRIGGER IF EXISTS update_articles_updated_at ON articles;
+        DROP TRIGGER IF EXISTS update_format_examples_updated_at ON format_examples;
+
+        CREATE TRIGGER update_articles_updated_at BEFORE UPDATE ON articles
             FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-        CREATE TRIGGER IF NOT EXISTS update_format_examples_updated_at BEFORE UPDATE ON format_examples
+        CREATE TRIGGER update_format_examples_updated_at BEFORE UPDATE ON format_examples
             FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
         """
 
