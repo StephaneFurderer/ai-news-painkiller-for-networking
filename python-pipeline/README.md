@@ -1,112 +1,22 @@
-# AI Content Generation Pipeline
+# Reader → Content Workflow
 
-A Python implementation of the n8n personal writer workflow, structured using patterns from the ai-resources folder.
+## Workflow
 
-## Features
-
-- **Content Generation**: Natural, human-like content using OpenAI GPT
-- **Telegram Integration**: Bot interface for easy interaction
-- **Smart Formatting**: Automatic message truncation and formatting for Telegram
-- **User Authentication**: Authorized user access control
-- **Input Validation**: Content request validation before processing
-- **Structured Architecture**: Clean separation of concerns inspired by ai-resources patterns
-
-## Project Structure
-
+```mermaid
+graph LR
+    A[Reader ID] --> B[Retrieve document]
+    B --> C[Set Goal\nChoose between: attract / nurture / convert\nAsk: What am I trying to make happen with this?]
+    C --> D[Refine to ICP\nWhat problem am I solving?\nWhat’s the takeaway for them?\nWhat change or result could they get?\nWhat might they be wondering right now?]
+    D --> E[Proof\nAdd proof or context so people trust you.\n\nBest sources:\n- Your own experiences (behind the scenes, lessons learned)\n- Client results (before and after, testimonials, screenshots)\n- Real stories (your observations, industry examples)\n- External sources (only when they add weight)]
+    E --> F[Format\nChoose the format that fits your goal.\n\nAttract (build awareness and trust):\n- Belief shift\n- Origin story\n- Industry myths\n\nNurture (show authority / create demand):\n- Framework\n- Step-by-step\n- How I / How to\n\nConvert (qualify and filter buyers):\n- Objection post\n- Result breakdown\n- Client success story]
 ```
-python-pipeline/
-├── src/
-│   ├── config/           # Configuration and prompts
-│   │   ├── settings.py   # Environment settings
-│   │   └── prompts.py    # AI prompts
-│   ├── core/             # Core functionality
-│   │   ├── models.py     # Pydantic models
-│   │   └── openai_client.py  # OpenAI API client
-│   ├── handlers/         # Request handlers
-│   │   ├── content_handler.py    # Content processing logic
-│   │   └── telegram_handler.py   # Telegram bot handling
-│   └── utils/            # Utility functions
-│       ├── auth.py       # Authentication utilities
-│       └── message_formatter.py  # Message formatting
-├── tests/                # Test files
-├── logs/                 # Log files
-├── main.py              # Main entry point
-├── requirements.txt     # Dependencies
-└── .env.example        # Environment template
-```
-
-## Setup
-
-1. **Clone and navigate to the project:**
-   ```bash
-   cd ai-news-painkiller-for-networking/python-pipeline
-   ```
-
-2. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Set up environment variables:**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your actual values
-   ```
-
-4. **Required environment variables:**
-   - `OPENAI_API_KEY`: Your OpenAI API key
-   - `TELEGRAM_BOT_TOKEN`: Your Telegram bot token
-   - `AUTHORIZED_USER_ID`: Your Telegram user ID
-   - `MAX_MESSAGE_LENGTH`: Maximum message length (default: 4000)
 
 ## Usage
 
-1. **Run the bot:**
-   ```bash
-   python main.py
-   ```
+```bash
+python readwise_processor.py --document-id "<reader_document_id>" --task summarize
+```
 
-2. **Interact with the bot on Telegram:**
-   - Send `/start` to begin
-   - Send `/help` for assistance
-   - Send any text to generate content
+Tasks: summarize, extract-key-points, analyze-sentiment.
 
-## Architecture Patterns
-
-This implementation uses several patterns inspired by the ai-resources folder:
-
-### 1. **Prompt Chaining**
-- Input validation → Content generation → Formatting
-
-### 2. **Structured Output**
-- Pydantic models for type safety and validation
-- Clear data flow between components
-
-### 3. **Modular Design**
-- Separate handlers for different concerns
-- Reusable utility functions
-- Clean configuration management
-
-### 4. **Error Handling**
-- Comprehensive logging with loguru
-- Graceful error recovery
-- User-friendly error messages
-
-## Extending the Pipeline
-
-To add new functionality:
-
-1. **Add new models** in `src/core/models.py`
-2. **Create new handlers** in `src/handlers/`
-3. **Add utility functions** in `src/utils/`
-4. **Update configuration** in `src/config/`
-
-## Learning Objectives
-
-This project demonstrates:
-
-- **Clean Python architecture** for AI applications
-- **Integration patterns** for external APIs (OpenAI, Telegram)
-- **Content processing** and formatting
-- **Authentication and validation** patterns
-- **Error handling** and logging best practices
+Configure token via `READWISE_TOKEN` or `config/settings.py`.
