@@ -193,3 +193,4 @@ screenshots/
 local_*
 dev_*
 test_*
+pgvector/
