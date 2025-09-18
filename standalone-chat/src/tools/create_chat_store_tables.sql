@@ -39,11 +39,33 @@ create table if not exists public.system_prompts (
   unique(agent_name, version)
 );
 
+-- Content templates table for LinkedIn post templates
+create table if not exists public.content_templates (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  content text not null,
+  author text,
+  linkedin_url text,
+  category text not null check (category in ('attract', 'nurture', 'convert')),
+  format text not null check (format in (
+    'belief_shift', 'origin_story', 'industry_myths',  -- attract
+    'framework', 'step_by_step', 'how_i_how_to',       -- nurture  
+    'objection_post', 'result_breakdown', 'client_success_story' -- convert
+  )),
+  tags text[] default '{}', -- array of tags like ['hook', 'social_proof', 'cta']
+  performance_metrics jsonb default '{}'::jsonb, -- likes, comments, shares if available
+  screenshot_url text, -- optional screenshot of the post
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 -- Indexes
 create index if not exists idx_messages_conversation_time on public.messages (conversation_id, created_at desc);
 create index if not exists idx_conversations_user_time on public.conversations (user_id, created_at desc);
 create index if not exists idx_messages_metadata_gin on public.messages using gin (metadata);
 create index if not exists idx_system_prompts_agent_current on public.system_prompts (agent_name, is_current);
+create index if not exists idx_content_templates_category_format on public.content_templates (category, format);
+create index if not exists idx_content_templates_tags_gin on public.content_templates using gin (tags);
 
 -- updated_at trigger
 create or replace function public.set_updated_at() returns trigger as $$
@@ -57,9 +79,15 @@ create trigger trg_conversations_updated_at
 before update on public.conversations
 for each row execute function public.set_updated_at();
 
+drop trigger if exists trg_content_templates_updated_at on public.content_templates;
+create trigger trg_content_templates_updated_at
+before update on public.content_templates
+for each row execute function public.set_updated_at();
+
 -- Enable Row Level Security (future-ready)
 alter table public.conversations enable row level security;
 alter table public.messages enable row level security;
+alter table public.content_templates enable row level security;
 
 -- Owner-style policies; service role bypasses these during server-side use
 drop policy if exists "select own conversations" on public.conversations;
@@ -98,5 +126,5 @@ create policy "delete own messages" on public.messages for delete using (
 
 -- Sanity checks
 select 'Chat schema ready' as status;
-select table_name from information_schema.tables where table_schema = 'public' and table_name in ('conversations','messages','system_prompts');
+select table_name from information_schema.tables where table_schema = 'public' and table_name in ('conversations','messages','system_prompts','content_templates');
 

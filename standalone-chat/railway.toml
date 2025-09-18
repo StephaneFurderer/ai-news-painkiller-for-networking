@@ -1,0 +1,23 @@
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "uvicorn server:app --host 0.0.0.0 --port $PORT"
+healthcheckPath = "/docs"
+healthcheckTimeout = 300
+restartPolicyType = "on_failure"
+
+[[services]]
+name = "backend"
+source = "."
+
+[services.variables]
+PORT = "8000"
+
+[[services]]
+name = "frontend"
+source = "./standalone-chat-ui"
+startCommand = "npm run start"
+
+[services.variables]
+NEXT_PUBLIC_API_URL = "https://your-backend-url.railway.app"

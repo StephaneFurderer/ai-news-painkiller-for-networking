@@ -30,6 +30,8 @@ export default function PostDetailPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [selectedFormat, setSelectedFormat] = useState('');
+  const [isFormatting, setIsFormatting] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -64,6 +66,56 @@ export default function PostDetailPage() {
       fetchData();
     }
   }, [conversationId]);
+
+  const handleFormatWithTemplate = async () => {
+    if (!selectedFormat || !conversationId) return;
+
+    setIsFormatting(true);
+    try {
+      // Get the latest Writer message as the draft
+      const writerMessage = messages.find(msg => msg.agent_name === 'Writer');
+      if (!writerMessage) {
+        alert('No Writer content found to format');
+        return;
+      }
+
+      const response = await fetch('http://127.0.0.1:8000/format-agent/transform', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          conversation_id: conversationId,
+          draft: writerMessage.content,
+          category: conversation?.state?.category,
+          format: selectedFormat,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to format content');
+      }
+
+      const data = await response.json();
+      
+      // Refresh the messages to show the new formatted content
+      const { data: msgData, error: msgError } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('conversation_id', conversationId)
+        .order('created_at', { ascending: true });
+
+      if (msgError) throw msgError;
+      setMessages(msgData || []);
+      
+      alert('Content formatted successfully!');
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Failed to format content. Make sure the backend server is running.');
+    } finally {
+      setIsFormatting(false);
+    }
+  };
 
   if (loading) {
     return <div className="container mx-auto p-4 text-center">Loading...</div>;
@@ -103,6 +155,42 @@ export default function PostDetailPage() {
         <div className="bg-blue-50 p-4 rounded-lg mb-6">
           <h2 className="text-lg font-semibold mb-2 text-gray-900">Conversation Summary</h2>
           <p className="text-gray-900">{conversation.summary}</p>
+        </div>
+      )}
+
+      {/* Format Selection */}
+      {messages.some(msg => msg.agent_name === 'Writer') && (
+        <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+          <h2 className="text-lg font-semibold mb-4 text-gray-900">Re-format Content</h2>
+          <div className="flex items-center gap-4">
+            <select
+              value={selectedFormat}
+              onChange={(e) => setSelectedFormat(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              disabled={isFormatting}
+            >
+              <option value="">Select format...</option>
+              <option value="belief_shift">Belief Shift</option>
+              <option value="origin_story">Origin Story</option>
+              <option value="industry_myths">Industry Myths</option>
+              <option value="framework">Framework</option>
+              <option value="step_by_step">Step-by-step</option>
+              <option value="how_i_how_to">How I / How to</option>
+              <option value="objection_post">Objection Post</option>
+              <option value="result_breakdown">Result Breakdown</option>
+              <option value="client_success_story">Client Success Story</option>
+            </select>
+            <button
+              onClick={handleFormatWithTemplate}
+              disabled={!selectedFormat || isFormatting}
+              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded"
+            >
+              {isFormatting ? 'Formatting...' : 'Apply Format'}
+            </button>
+          </div>
+          <p className="text-sm text-gray-600 mt-2">
+            Select a format to transform the Writer's content into a structured LinkedIn post.
+          </p>
         </div>
       )}
 
