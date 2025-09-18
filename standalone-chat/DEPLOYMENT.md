@@ -29,11 +29,20 @@ git push origin main
 
 #### Step 2: Deploy to Railway
 
+**Option A: Deploy Backend Only (Recommended for first deployment)**
+
 1. Go to [railway.app](https://railway.app) and sign in
 2. Click "New Project"
 3. Choose "Deploy from GitHub repo"
 4. Select your repository
-5. Railway will automatically detect your `railway.toml` configuration
+5. **Important**: Set the **Root Directory** to `standalone-chat`
+6. Railway will use the `railway-backend.toml` configuration
+
+**Option B: Deploy Both Services**
+
+1. Create two separate Railway services:
+   - **Backend Service**: Root directory = `standalone-chat`
+   - **Frontend Service**: Root directory = `standalone-chat/standalone-chat-ui`
 
 #### Step 3: Configure Environment Variables
 
